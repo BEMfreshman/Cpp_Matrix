@@ -1,7 +1,8 @@
 ﻿#include <iostream>
 #include "vld.h"
 #include "Matrix.h"
-#include "decomposition.h"
+#include "lu.h"
+#include "transform.h"
 
 
 /*************************************** *
@@ -12,15 +13,15 @@ using namespace std;
 
 int main()
 {
-	int Row = 3;
-	int Col = 3;
+	int Row = 5;
+	int Col = 5;
 
 	double **arr = new double* [Row];
 	for (int i = 0; i < Row; i++)
 	{
 		arr[i] = new double[Col];
 	}
-	double tmp[3][3] = { 2, 1, 3, 4, 2, 1, 6, -3, 4 };
+	double tmp[5][5] = { 75, 100, 83, 94, 72, 81, 66, -93, 74,-75,77,8,9,11,55,106,-78,-55,-79,-85,27,55,46,78,88 };
 	for (int i = 0; i < Row; i++)
 	{
 		for (int j = 0; j < Col; j++)
@@ -35,10 +36,43 @@ int main()
 
 	cout << endl;
 
-	double detRes = Det(mat);
+	//double detRes = Det(mat);
 
-	cout << detRes << endl;
+	//cout << detRes << endl;
 
+	LU<double> lu(mat);
+	lu.Decompose();
+
+	Matrix<double> L;
+	Matrix<double> U;
+	double detres;
+
+	if (lu.GetL(L) == 0)
+	{
+		return 0;
+	}
+
+	if (lu.GetU(U) == 0)
+	{
+		return 0;
+	}
+
+	if (lu.Det(&detres) == 0)
+	{
+		return 0;
+	}
+
+	cout << "L" << endl;
+	cout << L << endl;
+
+	cout << "U" << endl;
+	cout << U << endl;
+
+	cout << "L*U" << endl;
+	cout << L*U << endl;
+
+	cout << "detres" << endl;
+	cout << detres << endl;
 
 
 	for (int i = 0; i < Row; i++)

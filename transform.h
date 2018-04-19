@@ -1,8 +1,7 @@
-﻿#ifndef DECOMPOSITION_H
-#define DECOMPOSITION_H
+﻿#ifndef __TRANSFORM_H__
+#define __TRANSFORM_H__
 #include <vector>
 #include "Matrix.h"
-
 
 
 //2017.09.07 尚未测试
@@ -85,8 +84,8 @@ Matrix<DataType> ToRowEchelonForm(const Matrix<DataType>& mat, std::vector<int>&
 
 
 template<typename DataType>
-Matrix<DataType>& ToRowEchelonForm(Matrix<DataType>& mat,std::vector<int>& RowReturn,
-	std::vector<int>& ColReturn,std::vector<double>& NumReturn,int& FirstTransFormTimes)
+Matrix<DataType>& ToRowEchelonForm(Matrix<DataType>& mat, std::vector<int>& RowReturn,
+	std::vector<int>& ColReturn, std::vector<double>& NumReturn, int& FirstTransFormTimes)
 {
 	//采用消元将一个矩阵变为行最简矩阵
 	//RowReturn，ColReturn，NumReturn返回的是消元时对哪一行哪一列加上了哪个数字将这一列的非主元项目削减为0（在LU分解中用于L矩阵的产生）
@@ -158,77 +157,7 @@ Matrix<DataType>& ToRowEchelonForm(Matrix<DataType>& mat,std::vector<int>& RowRe
 	return mat;
 }
 
-template<typename DataType>
-void LU(const Matrix<DataType>& mat,
-        Matrix<DataType>& L,
-        Matrix<DataType>& U,
-		int& FirstTranFormTimes)
-{
-	std::vector<int> RowReturn;
-	std::vector<int> ColReturn;
-	std::vector<double> NumReturn;
 
-	int RowNum = mat.GetNumRow();
-	int ColNum = mat.GetNumCol();
-
-	U.Resize(RowNum, ColNum);
-	L.Resize(RowNum, ColNum);
-	U = mat;
-
-	ToRowEchelonForm(U,RowReturn,ColReturn,NumReturn,FirstTranFormTimes);
-	
-	L.IdentityMatrix();
-	// 单位矩阵
-
-	for (int i = 0; i < RowReturn.size(); i++)
-	{
-		int rowreturn = RowReturn[i];
-		int colreturn = ColReturn[i];
-		double numreturn = NumReturn[i];
-		L(rowreturn, colreturn) = -numreturn;
-	}
-}
-
-template<typename DataType>
-DataType Det(const Matrix<DataType>& mat)
-{
-	//求解行列式
-	int RowNum = mat.GetNumRow();
-	int ColNum = mat.GetNumCol();
-	int FirstTranFormTimes;
-	
-	if (RowNum != ColNum)
-	{
-		cout << "错误，非方阵，不可计算行列式" << endl;
-		exit(1);
-	}
-	else if (RowNum == 1)
-	{
-		//只有一个元素
-		return mat(0, 0);
-	}
-
-	Matrix<DataType> L;
-	Matrix<DataType> U;
-
-	LU(mat, L, U, FirstTranFormTimes);
-
-	cout << U << endl;
-
-	DataType detRes = U(0,0);
-
-	for (int i = 1; i < RowNum; i++)
-	{
-		detRes *= U(i, i);
-	}
-
-	if (FirstTranFormTimes % 2 != 0)
-	{
-		//做了奇数次第一类变换
-		detRes = -detRes;
-	}
-	return detRes;
-}
 
 
 

@@ -66,24 +66,25 @@ public:
 	Matrix<T>& TransPose();
 
 	Matrix<T>& FirstTypeTransForm(int Row_One, int Row_Two);
-	Matrix<T> FirstTypeTransForm(int Row_One, int Row_Two) const;
+	const Matrix<T> FirstTypeTransForm(int Row_One, int Row_Two) const;
 	//第一类初等变换---交换两行
 
 	Matrix<T>& SecondTypeTransForm(int Row, double Num);
-	Matrix<T> SecondTypeTransForm(int Row, double Num) const;
+	const Matrix<T> SecondTypeTransForm(int Row, double Num) const;
 	//第二类初等变换---某一行乘以一个数
 	// Row---待乘数的行
 	// Num---需要乘以的数
 
 	Matrix<T>& ThirdTypeTransForm(int Row_One, int Row_Two, double Num);
-	Matrix<T> ThirdTypeTransForm(int Row_One, int Row_Two, double Num) const;
+	const Matrix<T> ThirdTypeTransForm(int Row_One, int Row_Two, double Num) const;
 	//第三类变换----某一行的倍数加到另一行
 	//Row_One ----- 需要乘数字的一行
 	//Row_Two ----- 待加的一行
 	//Num    ------ 乘数
 
 
-	const Matrix<T> Block(int RowStart, int ColStart, int RowNumToBlock, int ColNumToBlock) const;
+	const Matrix<T> ExtractBlock(int RowStart, int ColStart, int RowNumToBlock, int ColNumToBlock) const;
+	void SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNumtoSet, const Matrix<T>& mat);
 		
 
 
@@ -341,6 +342,7 @@ const Matrix<T> Matrix<T>::operator *(const Matrix<T>& mat) const
     }
 
     Matrix<T> res_mat(NumRow,mat.NumCol);
+	res_mat.SetZeros();
 
     for(int i = 0;i < NumRow;++i)
     {
@@ -348,7 +350,7 @@ const Matrix<T> Matrix<T>::operator *(const Matrix<T>& mat) const
         {
             for(int k = 0;k < NumCol;++k)
             {
-                res_mat.p1[i][j] = p1[i][k]*mat[k][j];
+                res_mat.p1[i][j] += p1[i][k]*mat.p1[k][j];
             }
         }
     }
@@ -488,6 +490,44 @@ inline int Matrix<T>::GetNumData()
     return Size;
 }
 
+template<typename T>
+const Matrix<T> Matrix<T>::ExtractBlock(int RowStart, int ColStart, int RowNumToBlock, int ColNumToBlock) const
+{
+	//抽取一个Block出来
+
+	assert(RowStart + RowNumToBlock <= NumRow);
+	assert(ColStart + ColNumToBlock <= NumCol);
+
+
+	Matrix<T> tmp(RowNumToBlock, ColNumToBlock);
+	for (int i = RowStart; i < RowStart+ RowNumToBlock; i++)
+	{
+		for (int j = ColStart; j < ColStart + ColNumToBlock; j++)
+		{
+			tmp.p1[i - RowStart][j - ColStart] = p1[i][j];
+		}
+	}
+	return tmp;
+}
+
+template<typename T>
+void Matrix<T>::SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNumToSet, const Matrix<T>& mat)
+{
+	assert(RowStart + RowNumToBlock <= NumRow);
+	assert(ColStart + ColNumToBlock <= NumCol);
+
+	assert(RowNumToSet <= mat.NumRow);
+	assert(ColNumToSet <= mat.NumCol);
+
+	for (int i = 0; i < RowNumToSet; i++)
+	{
+		for (int j = 0; j < ColNumToSet; j++)
+		{
+			p1[i + RowStart][j + ColStart] = mat.p1[i][j];
+		}
+	}
+}
+
 
 template<typename T>
 Matrix<T>& Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two)
@@ -504,7 +544,7 @@ Matrix<T>& Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two)
 
 
 template<typename T>
-Matrix<T> Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two) const
+const Matrix<T> Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two) const
 {
 	//交换两行
 
@@ -538,7 +578,7 @@ Matrix<T>& Matrix<T>::SecondTypeTransForm(int Row, double Num)
 
 
 template<typename T>
-Matrix<T> Matrix<T>::SecondTypeTransForm(int Row, double Num) const
+const Matrix<T> Matrix<T>::SecondTypeTransForm(int Row, double Num) const
 {
 	//第二类初等变换---某一行乘以一个数
 	// Row---待乘数的行
@@ -578,7 +618,7 @@ Matrix<T>& Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double Num)
 
 
 template<typename T>
-Matrix<T> Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double Num) const
+const Matrix<T> Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double Num) const
 {
 	//第三类变换----某一行的倍数加到另一行
 	//Row_One ----- 需要乘数字的一行
