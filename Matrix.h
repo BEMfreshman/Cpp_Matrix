@@ -46,6 +46,7 @@ public:
     Matrix<T>& operator -=(const Matrix<T>& mat);
     Matrix<T>& operator -=(const T num);
     Matrix<T>& operator *=(const T num);
+	Matrix<T>& operator /= (const T num);
 
     T& operator ()(int index_row,int index_col);//将函数操作符重载，实现寻址操作符功能
     const T operator()(int index_row,int index_col) const;//供常对象使用
@@ -346,7 +347,7 @@ const Matrix<T> Matrix<T>::operator *(const Matrix<T>& mat) const
 
     for(int i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(int j = 0;j < mat.NumCol;++j)
         {
             for(int k = 0;k < NumCol;++k)
             {
@@ -448,6 +449,19 @@ Matrix<T>& Matrix<T>::operator *=(const T num)
 }
 
 template<typename T>
+Matrix<T>& Matrix<T>::operator /= (const T num)
+{
+	for (int i = 0; i < NumRow; ++i)
+	{
+		for (int j = 0; j < NumCol; ++j)
+		{
+			p1[i][j] /= num;
+		}
+	}
+	return *this;
+}
+
+template<typename T>
 T& Matrix<T>::operator ()(int index_row,int index_col)
 {
     return p1[index_row][index_col];
@@ -513,8 +527,8 @@ const Matrix<T> Matrix<T>::ExtractBlock(int RowStart, int ColStart, int RowNumTo
 template<typename T>
 void Matrix<T>::SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNumToSet, const Matrix<T>& mat)
 {
-	assert(RowStart + RowNumToBlock <= NumRow);
-	assert(ColStart + ColNumToBlock <= NumCol);
+	assert(RowStart + RowNumToSet <= NumRow);
+	assert(ColStart + ColNumToSet <= NumCol);
 
 	assert(RowNumToSet <= mat.NumRow);
 	assert(ColNumToSet <= mat.NumCol);

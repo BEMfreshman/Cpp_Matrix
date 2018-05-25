@@ -20,7 +20,12 @@ public:
 	~LU();
 
 	//操作
-	int Decompose();   //默认对A矩阵进行分解
+	//int Decompose();   //默认对A矩阵进行分解
+
+	int DefaultFact();        //默认分解方法
+	int FullPivotFact();      //全主元分解方法
+	int ColPivotFact();       //列主元分解方法
+
 	int Solve();         //求解方程组   Ax  =  b
 
 	int Det(T* Val);      //计算A的行列式值
@@ -39,7 +44,9 @@ private:
 	Matrix<T> L;
 	Matrix<T> U;
 
-	Matrix<T> x;
+	Matrix<T> P;
+	Matrix<T> Q;
+
 
 };
 
@@ -69,36 +76,118 @@ LU<T>::~LU()
 
 }
 
-template <typename T>
-int LU<T>::Decompose()
+template<typename T>
+int LU<T>::DefaultFact()
 {
-	std::vector<int> RowReturn;
-	std::vector<int> ColReturn;
-	std::vector<double> NumReturn;
+	//当主元为0时会失败
+	//理论《数值线性代数》 P18
 
-	int RowNum = A.GetNumRow();
-	int ColNum = A.GetNumCol();
+	int row = A.GetNumRow();
+	int col = A.GetNumCol();
 
-	U.Resize(RowNum, ColNum);
-	L.Resize(RowNum, ColNum);
-	U = A;
+	L.Resize(row, col);
+	U.Resize(row, col);
+	L.SetZeros();
+	U.SetZeros();
 
-	ToRowEchelonForm<T>(U, RowReturn, ColReturn, NumReturn, FirstTranFormTimes);
+	Matrix<T> tmpA = A;
 
-	L.IdentityMatrix();
-	// 单位矩阵
-
-	for (int i = 0; i < RowReturn.size(); i++)
+	for (int i = 0; i < row - 1; i++)
 	{
-		int rowreturn = RowReturn[i];
-		int colreturn = ColReturn[i];
-		double numreturn = NumReturn[i];
-		L(rowreturn, colreturn) = -numreturn;
+		Matrix<T> matColBelowPivot(row - i - 1, 1);
+		Matrix<T> matRowRightPivot(1, row - i - 1);
+		Matrix<T> matBelowRightPivot(row - i - 1, row - i - 1);
+		
+		double pivot = tmpA(i, i);
+		if (abs(pivot) < sqrt(EPS))
+		{
+			//主元为0
+			return 0;
+		}
+
+		matColBelowPivot = tmpA.ExtractBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol());
+		matRowRightPivot = tmpA.ExtractBlock(i, i + 1, matRowRightPivot.GetNumRow(), matRowRightPivot.GetNumCol());
+		matBelowRightPivot = tmpA.ExtractBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol());
+
+		matColBelowPivot /= pivot;
+		matBelowRightPivot -= matColBelowPivot * matRowRightPivot;
+
+		cout << "matColBelowPivot" << endl;
+		cout << matColBelowPivot << endl;
+
+		cout << "matRowRightPivot" << endl;
+		cout << matRowRightPivot << endl;
+
+		cout << "matColBelowPivot * matRowRightPivot" << endl;
+		cout << matColBelowPivot * matRowRightPivot << endl;
+
+		tmpA.SetBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol(), matColBelowPivot);
+		tmpA.SetBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol(), matBelowRightPivot);
+
+		cout << "tmpA is " << endl;
+		cout << tmpA << endl;
 	}
 
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < col; j++)
+		{
+			if (i > j)
+			{
+				L(i, j) = tmpA(i, j);
+			}
+			else if (i == j)
+			{
+				L(i, j) = 1;
+				U(i, j) = tmpA(i, j);
+			}
+			else 
+			{
+				U(i, j) = tmpA(i, j);
+			}
+		}
+	}
 	LUDecomposeFlag = 1;
 	return 1;
+
 }
+
+template <typename T>
+int LU<T>::FullPivotFact()
+{
+
+}
+
+//template <typename T>
+//int LU<T>::Decompose()
+//{
+//	std::vector<int> RowReturn;
+//	std::vector<int> ColReturn;
+//	std::vector<double> NumReturn;
+//
+//	int RowNum = A.GetNumRow();
+//	int ColNum = A.GetNumCol();
+//
+//	U.Resize(RowNum, ColNum);
+//	L.Resize(RowNum, ColNum);
+//	U = A;
+//
+//	ToRowEchelonForm<T>(U, RowReturn, ColReturn, NumReturn, FirstTranFormTimes);
+//
+//	L.IdentityMatrix();
+//	// 单位矩阵
+//
+//	for (int i = 0; i < RowReturn.size(); i++)
+//	{
+//		int rowreturn = RowReturn[i];
+//		int colreturn = ColReturn[i];
+//		double numreturn = NumReturn[i];
+//		L(rowreturn, colreturn) = -numreturn;
+//	}
+//
+//	LUDecomposeFlag = 1;
+//	return 1;
+//}
 
 template <typename T>
 int LU<T>::Det(T *Val)
