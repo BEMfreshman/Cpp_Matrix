@@ -38,6 +38,7 @@ public:
     const Matrix<T> operator +(const T num) const; //矩阵加标量
     const Matrix<T> operator -(const Matrix<T>& mat) const;
     const Matrix<T> operator -(const T num) const;
+	const Matrix<T> operator -() const;
     const Matrix<T> operator *(const Matrix<T>& mat) const;
     const Matrix<T> operator *(const T num) const;
 
@@ -45,6 +46,7 @@ public:
     Matrix<T>& operator +=(const T num);
     Matrix<T>& operator -=(const Matrix<T>& mat);
     Matrix<T>& operator -=(const T num);
+	Matrix<T>& operator *=(const Matrix<T>& mat);      //mat必须是方阵
     Matrix<T>& operator *=(const T num);
 	Matrix<T>& operator /= (const T num);
 
@@ -86,6 +88,9 @@ public:
 
 	const Matrix<T> ExtractBlock(int RowStart, int ColStart, int RowNumToBlock, int ColNumToBlock) const;
 	void SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNumtoSet, const Matrix<T>& mat);
+
+	void FindMax(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind,T* Value,int* row,int* col);
+	void FindMin(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind,T* Value,int* row,int* col);
 		
 
 
@@ -106,8 +111,12 @@ private:
 	int Size;
 	T** p1;
 
+
+private:
 	void Allocate(int Num_Row,int Num_Col);
 	void DeAllocate();
+
+	void Swap(Matrix<T>& mat);
 	
 };
 
@@ -155,6 +164,26 @@ void Matrix<T>::DeAllocate()
     NumRow = 0;
     NumCol = 0;
     Size = 0;
+}
+
+
+template<typename T>
+void Matrix<T>::Swap(Matrix<T>& mat)
+{
+	T tmp;
+	
+	assert(NumCol = mat.NumCol);
+	assert(NumRow = mat.NumRow);
+
+	for (int i = 0; i < NumRow; i++)
+	{
+		for (int j = 0; j < NumCol; j++)
+		{
+			tmp = mat.p1[i][j];
+			mat.p1[i][j] = p1[i][j];
+			p1[i][j] = tmp;
+		}
+	}
 }
 
 template<typename T>
@@ -334,6 +363,20 @@ const Matrix<T> Matrix<T>::operator -(const T num) const
 }
 
 template<typename T>
+const Matrix<T> Matrix<T>::operator -() const
+{
+	Matrix<T> res_mat(NumRow, NumCol);
+	for (int i = 0; i < NumRow; ++i)
+	{
+		for (int j = 0; j < NumCol; ++j)
+		{
+			res_mat.p1[i][j] = -p1[i][j];
+		}
+	}
+	return res_mat;
+}
+
+template<typename T>
 const Matrix<T> Matrix<T>::operator *(const Matrix<T>& mat) const
 {
     if(NumCol !=mat.NumRow)
@@ -432,6 +475,14 @@ Matrix<T>& Matrix<T>::operator -=(const T num)
         }
     }
     return *this;
+}
+
+template<typename T>
+Matrix<T>& Matrix<T>::operator *=(const Matrix<T>& mat)
+{
+	Matrix<T> tmp = (*this) * mat;
+	Swap(tmp);
+	return *this;
 }
 
 
@@ -540,6 +591,52 @@ void Matrix<T>::SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNum
 			p1[i + RowStart][j + ColStart] = mat.p1[i][j];
 		}
 	}
+}
+
+template<typename T>
+void Matrix<T>::FindMax(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind, T* Value, int* row, int* col)
+{
+	assert(RowStart + RowNumToFind <= NumRow);
+	assert(ColStart + ColNumToFind <= NumCol);
+
+	T max = p1[RowStart][ColStart];
+	for (int i = RowStart; i < RowStart + RowNumToFind; i++)
+	{
+		for (int j = ColStart; j < ColStart + ColNumToFind; j++)
+		{
+			if (max < p1[i][j])
+			{
+				max = p1[i][j];
+				*row = i;
+				*col = j;
+			}
+		}
+	}
+
+	*Value = max;
+}
+
+template<typename T>
+void Matrix<T>::FindMin(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind, T* Value, int* row, int* col)
+{
+	assert(RowStart + RowNumToFind <= NumRow);
+	assert(ColStart + ColNumToFind <= NumCol);
+
+	T min = p1[RowStart][ColStart];
+	for (int i = RowStart; i < RowStart + RowNumToFind; i++)
+	{
+		for (int j = ColStart; j < ColStart + ColNumToFind; j++)
+		{
+			if (min > p1[i][j])
+			{
+				min = p1[i][j];
+				*row = i;
+				*row = j;
+			}
+		}
+	}
+	
+	*Value = min;
 }
 
 

@@ -7,6 +7,8 @@
 #include <vector>
 #include "Matrix.h"
 #include "transform.h"
+#include "GaussSolver.h"
+
 using namespace std;
 
 template <typename T>
@@ -33,6 +35,10 @@ public:
 	int GetL(Matrix<T>& L) const;
 	int GetU(Matrix<T>& U) const;
 
+	int GetP(Matrix<T>& P) const;
+	int GetQ(Matrix<T>& Q) const;
+
+
 private:
 
 	int LUDecomposeFlag;
@@ -46,6 +52,15 @@ private:
 
 	Matrix<T> P;
 	Matrix<T> Q;
+
+private:
+	const Matrix<T> ProducePorQMatrix(int p, int q);
+	//交换第p行（列）和第q行（列）
+	//理论参见 P21
+
+	int ithGaussFact(int i);
+	int ithGaussFact(int i, Matrix<T>& Li);
+	//选取第i行第i列作为主元进行高斯消去
 
 
 };
@@ -77,6 +92,107 @@ LU<T>::~LU()
 }
 
 template<typename T>
+const Matrix<T> LU<T>::ProducePorQMatrix(int p, int q)
+{
+	Matrix<T> mat(A.GetNumRow(), A.GetNumCol());
+	mat.IdentityMatrix();     //单位矩阵
+
+	//交换mat的第p列和第q列
+
+	Matrix<T> pmat(A.GetNumRow(), 1);
+	Matrix<T> qmat(A.GetNumRow(), 1);
+
+	pmat = mat.ExtractBlock(0, p, pmat.GetNumRow(), pmat.GetNumCol());
+	qmat = mat.ExtractBlock(0, q, qmat.GetNumRow(), qmat.GetNumCol());
+
+	mat.SetBlock(0, p, pmat.GetNumRow(), pmat.GetNumCol(), qmat);
+	mat.SetBlock(0, q, qmat.GetNumRow(), qmat.GetNumCol(), pmat);
+
+	return mat;
+
+}
+
+template<typename T>
+int LU<T>::ithGaussFact(int i)
+{
+	int row = A.GetNumRow();
+
+	Matrix<T> matColBelowPivot(row - i - 1, 1);
+	Matrix<T> matRowRightPivot(1, row - i - 1);
+	Matrix<T> matBelowRightPivot(row - i - 1, row - i - 1);
+
+	double pivot = A(i, i);
+	if (abs(pivot) < sqrt(EPS))
+	{
+		//主元为0
+		return 0;
+	}
+
+	matColBelowPivot = A.ExtractBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol());
+	matRowRightPivot = A.ExtractBlock(i, i + 1, matRowRightPivot.GetNumRow(), matRowRightPivot.GetNumCol());
+	matBelowRightPivot = A.ExtractBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol());
+
+	matColBelowPivot /= pivot;
+	matBelowRightPivot -= matColBelowPivot * matRowRightPivot;
+
+
+	A.SetBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol(), matColBelowPivot);
+	A.SetBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol(), matBelowRightPivot);
+
+	
+	return 1;
+}
+
+template<typename T>
+int LU<T>::ithGaussFact(int i,Matrix<T>& InvLi)
+{
+	int row = A.GetNumRow();
+
+	InvLi.Resize(A.GetNumRow(), A.GetNumCol());
+	InvLi.IdentityMatrix();
+
+	Matrix<T> matColBelowPivot(row - i - 1, 1);
+	Matrix<T> matRowRightPivot(1, row - i - 1);
+	Matrix<T> matBelowRightPivot(row - i - 1, row - i - 1);
+
+	double pivot = A(i, i);
+	if (abs(pivot) < sqrt(EPS))
+	{
+		//主元为0
+		return 0;
+	}
+
+	matColBelowPivot = A.ExtractBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol());
+	matRowRightPivot = A.ExtractBlock(i, i + 1, matRowRightPivot.GetNumRow(), matRowRightPivot.GetNumCol());
+	matBelowRightPivot = A.ExtractBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol());
+
+	matColBelowPivot /= pivot;
+	matBelowRightPivot -= matColBelowPivot * matRowRightPivot;
+
+	InvLi.SetBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol(), matColBelowPivot);
+	
+	/*
+	Li本身是单位矩阵经过初等行变换得来的矩阵，所以InvLi（即它的逆矩阵）为其非对角线元素皆取负数即可
+	
+	Li = [                                InvLi = [
+	        1   0   0                               1    0    0
+	        2   1   0                              -2    1    0    
+			3   0   1                              -3    0    1
+	     ]                                        ]
+	
+	
+	*/
+
+	
+
+	A.SetBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol(), matColBelowPivot);
+	A.SetBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol(), matBelowRightPivot);
+
+	
+	return 1;
+}
+
+template<typename T>
 int LU<T>::DefaultFact()
 {
 	//当主元为0时会失败
@@ -90,42 +206,14 @@ int LU<T>::DefaultFact()
 	L.SetZeros();
 	U.SetZeros();
 
-	Matrix<T> tmpA = A;
 
 	for (int i = 0; i < row - 1; i++)
 	{
-		Matrix<T> matColBelowPivot(row - i - 1, 1);
-		Matrix<T> matRowRightPivot(1, row - i - 1);
-		Matrix<T> matBelowRightPivot(row - i - 1, row - i - 1);
-		
-		double pivot = tmpA(i, i);
-		if (abs(pivot) < sqrt(EPS))
+		int reFlag = ithGaussFact(i);
+		if (reFlag == 0)
 		{
-			//主元为0
 			return 0;
 		}
-
-		matColBelowPivot = tmpA.ExtractBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol());
-		matRowRightPivot = tmpA.ExtractBlock(i, i + 1, matRowRightPivot.GetNumRow(), matRowRightPivot.GetNumCol());
-		matBelowRightPivot = tmpA.ExtractBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol());
-
-		matColBelowPivot /= pivot;
-		matBelowRightPivot -= matColBelowPivot * matRowRightPivot;
-
-		cout << "matColBelowPivot" << endl;
-		cout << matColBelowPivot << endl;
-
-		cout << "matRowRightPivot" << endl;
-		cout << matRowRightPivot << endl;
-
-		cout << "matColBelowPivot * matRowRightPivot" << endl;
-		cout << matColBelowPivot * matRowRightPivot << endl;
-
-		tmpA.SetBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol(), matColBelowPivot);
-		tmpA.SetBlock(i + 1, i + 1, matBelowRightPivot.GetNumRow(), matBelowRightPivot.GetNumCol(), matBelowRightPivot);
-
-		cout << "tmpA is " << endl;
-		cout << tmpA << endl;
 	}
 
 	for (int i = 0; i < row; i++)
@@ -134,16 +222,16 @@ int LU<T>::DefaultFact()
 		{
 			if (i > j)
 			{
-				L(i, j) = tmpA(i, j);
+				L(i, j) = A(i, j);
 			}
 			else if (i == j)
 			{
 				L(i, j) = 1;
-				U(i, j) = tmpA(i, j);
+				U(i, j) = A(i, j);
 			}
 			else 
 			{
-				U(i, j) = tmpA(i, j);
+				U(i, j) = A(i, j);
 			}
 		}
 	}
@@ -155,7 +243,129 @@ int LU<T>::DefaultFact()
 template <typename T>
 int LU<T>::FullPivotFact()
 {
+	//全选主元三角分解
+	//具体理论参见《数值线性代数》 P21——P25
+	//对A矩阵的分解结果为
+	//PAQ = LU
 
+	int row = A.GetNumRow();
+	int col = A.GetNumCol();
+
+	
+	P.Resize(row, col);
+	P.SetZeros();
+	Q.Resize(row, col);
+	Q.SetZeros();
+	L.Resize(row, col);
+	L.SetZeros();
+	U.Resize(row, col);
+	U.SetZeros();
+	
+
+	vector<Matrix<T>> PVec;
+	vector<Matrix<T>> QVec;
+	//vector<Matrix<T>> InvLiVec;
+
+	T Pivot;
+	int PivotRow;
+	int PivotCol;
+	for (int i = 0; i < row - 1; i++)
+	{
+		Matrix<T> PEach;
+		Matrix<T> QEach;
+		Matrix<T> InvLiEach;
+		A.FindMax(i, i, row - i, col - i, &Pivot, &PivotRow, &PivotCol);
+
+		if (abs(Pivot) < sqrt(EPS))
+		{
+			printf("矩阵奇异");
+			return 0;
+		}
+
+		PEach = ProducePorQMatrix(PivotRow, i);
+		QEach = ProducePorQMatrix(PivotCol, i);
+
+		cout << "Before" << endl;
+		cout << A << endl;
+		A = PEach * A * QEach;
+
+		cout << "After" << endl;
+		cout << A << endl;
+
+		PVec.push_back(PEach);
+		QVec.push_back(QEach);
+
+		int reFlag = ithGaussFact(i);
+		if (reFlag == 0)
+		{
+			return 0;
+		}
+
+		cout << "After i Fact" << endl;
+		cout << A << endl;
+
+		//InvLiVec.push_back(InvLiEach);
+	}
+
+
+	Matrix<T> InvLiPi;
+	for (int i = 0; i < QVec.size(); i++)
+	{
+		if (i == 0)
+		{
+			Q = QVec[i];
+			//L = InvLiVec[i];
+		}
+		else
+		{
+			Q *= QVec[i];
+			//L = PVec[i] * L*PVec[i] * InvLiVec[i];
+		}
+	}
+
+	for (int i = PVec.size() - 1; i >= 0; i--)
+	{
+		if (i == PVec.size() - 1)
+		{
+			P = PVec[i];
+		}
+		else
+		{
+			P *= PVec[i];
+		}
+	}
+
+	/*Matrix<T> tmpI(LiPi.GetNumRow(), LiPi.GetNumCol());
+	tmpI.IdentityMatrix();
+
+	GaussSolver<T> GS(LiPi, tmpI);
+	GS.LowtriSolve();
+
+	InvLiPi = GS.getAns();*/
+
+	//L = P*InvLiPi;
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < col; j++)
+		{
+			if (i > j)
+			{
+				L(i, j) = A(i, j);
+			}
+			else if (i == j)
+			{
+				L(i, j) = 1;
+				U(i, j) = A(i, j);
+			}
+			else
+			{
+				U(i, j) = A(i, j);
+			}
+		}
+	}
+
+	LUDecomposeFlag = 1;
+	return 1;
 }
 
 //template <typename T>
@@ -255,6 +465,36 @@ int LU<T>::GetU(Matrix<T>& UReturn) const
 	else
 	{
 		UReturn = U;
+		return 1;
+	}
+}
+
+template<typename T>
+int LU<T>::GetP(Matrix<T>& Pmat) const
+{
+	if (LUDecomposeFlag == 0)
+	{
+		printf("未进行LU分解\n");
+		return 0;
+	}
+	else
+	{
+		Pmat = P;
+		return 1;
+	}
+}
+
+template<typename T>
+int LU<T>::GetQ(Matrix<T>& Qmat) const
+{
+	if (LUDecomposeFlag == 0)
+	{
+		printf("未进行LU分解\n");
+		return 0;
+	}
+	else
+	{
+		Qmat = Q;
 		return 1;
 	}
 }

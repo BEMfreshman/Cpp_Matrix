@@ -30,23 +30,21 @@ int main()
 		}
 	}
 
-	Matrix<double> mat(Row, Col, arr);
+	Matrix<double> A(Row, Col, arr);
 
-	cout << mat << endl;
+	cout << A << endl;
 
 	cout << endl;
 
-	//double detRes = Det(mat);
-
-	//cout << detRes << endl;
-
-	LU<double> lu(mat);
-	lu.DefaultFact();
+	LU<double> lu(A);
 
 	Matrix<double> L;
 	Matrix<double> U;
-	double detres;
 
+	
+	
+	/*
+	lu.DefaultFact();
 	if (lu.GetL(L) == 0)
 	{
 		return 0;
@@ -66,7 +64,48 @@ int main()
 
 	cout << "L*U" << endl;
 	cout << L*U << endl;
+	*/
 
+
+	Matrix<double> P;
+	Matrix<double> Q;
+	lu.FullPivotFact();
+
+	lu.GetP(P);
+	lu.GetQ(Q);
+	lu.GetL(L);
+	lu.GetU(U);
+
+	cout << "P" << endl;
+	cout << P << endl;
+
+	cout << "Q" << endl;
+	cout << Q << endl;
+
+	cout << "A" << endl;
+	cout << A << endl;
+
+
+	cout << "PAQ" << endl;
+	cout << P*A*Q << endl;
+
+	cout << "L" << endl;
+	cout << L << endl;
+
+	cout << "U" << endl;
+	cout << U << endl;
+
+	cout << "LU" << endl;
+	cout << L*U << endl;
+
+	double tmp1[3][3] = { 10,3,6,7,1,4,8,2,5 };
+	for (int i = 0; i < Row; i++)
+	{
+		for (int j = 0; j < Col; j++)
+		{
+			arr[i][j] = tmp1[i][j];
+		}
+	}
 
 	for (int i = 0; i < Row; i++)
 	{
