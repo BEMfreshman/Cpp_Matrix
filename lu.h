@@ -7,7 +7,7 @@
 #include <vector>
 #include "Matrix.h"
 #include "transform.h"
-#include "GaussSolver.h"
+//#include "GaussSolver.h"
 
 using namespace std;
 
@@ -344,6 +344,102 @@ int LU<T>::FullPivotFact()
 	InvLiPi = GS.getAns();*/
 
 	//L = P*InvLiPi;
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < col; j++)
+		{
+			if (i > j)
+			{
+				L(i, j) = A(i, j);
+			}
+			else if (i == j)
+			{
+				L(i, j) = 1;
+				U(i, j) = A(i, j);
+			}
+			else
+			{
+				U(i, j) = A(i, j);
+			}
+		}
+	}
+
+	LUDecomposeFlag = 1;
+	return 1;
+}
+
+
+template <typename T>
+int LU<T>::ColPivotFact()
+{
+	//列主元三角分解
+	//具体理论参见《数值线性代数》 P26
+	//对A矩阵的分解结果为
+	//PA = LU
+
+	int row = A.GetNumRow();
+	int col = A.GetNumCol();
+
+
+	P.Resize(row, col);
+	P.SetZeros();
+	L.Resize(row, col);
+	L.SetZeros();
+	U.Resize(row, col);
+	U.SetZeros();
+
+
+	vector<Matrix<T>> PVec;
+
+	T Pivot;
+	int PivotRow;
+	int PivotCol;
+	for (int i = 0; i < row - 1; i++)
+	{
+		Matrix<T> PEach;
+		Matrix<T> InvLiEach;
+		A.FindMax(i, i, row - i, 1, &Pivot, &PivotRow, &PivotCol);
+
+		if (abs(Pivot) < sqrt(EPS))
+		{
+			printf("矩阵奇异");
+			return 0;
+		}
+
+		PEach = ProducePorQMatrix(PivotRow, i);
+
+		cout << "Before" << endl;
+		cout << A << endl;
+		A = PEach * A;
+
+		cout << "After" << endl;
+		cout << A << endl;
+
+		PVec.push_back(PEach);
+
+		int reFlag = ithGaussFact(i);
+		if (reFlag == 0)
+		{
+			return 0;
+		}
+
+		cout << "After i Fact" << endl;
+		cout << A << endl;
+
+	}
+
+	for (int i = PVec.size() - 1; i >= 0; i--)
+	{
+		if (i == PVec.size() - 1)
+		{
+			P = PVec[i];
+		}
+		else
+		{
+			P *= PVec[i];
+		}
+	}
+
 	for (int i = 0; i < row; i++)
 	{
 		for (int j = 0; j < col; j++)

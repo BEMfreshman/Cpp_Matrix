@@ -66,7 +66,8 @@ public:
 	void Resize(int Row, int Col); //重新分配
 
 
-	Matrix<T>& TransPose();
+	//Matrix<T>& TransPose();
+	const Matrix<T> TransPose() const;
 
 	Matrix<T>& FirstTypeTransForm(int Row_One, int Row_Two);
 	const Matrix<T> FirstTypeTransForm(int Row_One, int Row_Two) const;
@@ -776,20 +777,35 @@ void Matrix<T>::Resize(int Row, int Col)
 	Allocate(Row, Col);
 }
 
+//template<typename T>
+//Matrix<T>& Matrix<T>::TransPose()
+//{
+//	T tmp;
+//	for (int i = 0; i < NumRow; i++)
+//	{
+//		for (int j = i; j < NumCol; j++)
+//		{
+//			tmp = p1[i][j];
+//			p1[i][j] = p1[j][i];
+//			p1[j][i] = tmp;
+//		}
+//	}
+//	return *this;
+//}
+
 template<typename T>
-Matrix<T>& Matrix<T>::TransPose()
+const Matrix<T> Matrix<T>::TransPose() const
 {
+	Matrix<T> mat(NumCol,NumRow);
 	T tmp;
 	for (int i = 0; i < NumRow; i++)
 	{
-		for (int j = i; j < NumCol; j++)
+		for (int j = 0; j < NumCol; j++)
 		{
-			tmp = p1[i][j];
-			p1[i][j] = p1[j][i];
-			p1[j][i] = tmp;
+			mat.p1[j][i] = p1[i][j];
 		}
 	}
-	return *this;
+	return mat;
 }
 
 
