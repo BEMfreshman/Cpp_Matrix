@@ -1,7 +1,5 @@
-#ifndef __LU_H__
-#define __LU_H__
-
-//抽象基类，是所有算法类的父类
+#ifndef LU_H
+#define LU_H
 
 #include <iostream>
 #include <vector>
@@ -21,22 +19,17 @@ public:
 
 	~LU();
 
-	//操作
-	//int Decompose();   //默认对A矩阵进行分解
-
-	int DefaultFact();        //默认分解方法
-	int FullPivotFact();      //全主元分解方法
-	int ColPivotFact();       //列主元分解方法
-
-	int Solve();         //求解方程组   Ax  =  b
-
 	int Det(T* Val);      //计算A的行列式值
 
-	int GetL(Matrix<T>& L) const;
-	int GetU(Matrix<T>& U) const;
+//	int GetL(Matrix<T>& L) const;
+//	int GetU(Matrix<T>& U) const;
 
-	int GetP(Matrix<T>& P) const;
-	int GetQ(Matrix<T>& Q) const;
+//	int GetP(Matrix<T>& P) const;
+//	int GetQ(Matrix<T>& Q) const;
+
+    vector<Matrix<T>> LUDeCompose();
+    vector<Matrix<T>> PQLUDeCompose();
+    vector<Matrix<T>> PLUDeCompose();
 
 
 private:
@@ -46,9 +39,6 @@ private:
 
 	Matrix<T> A;
 	Matrix<T> b;
-
-	Matrix<T> L;
-	Matrix<T> U;
 
 	Matrix<T> P;
 	Matrix<T> Q;
@@ -192,308 +182,284 @@ int LU<T>::ithGaussFact(int i,Matrix<T>& InvLi)
 	return 1;
 }
 
-template<typename T>
-int LU<T>::DefaultFact()
+
+template <typename T>
+vector<Matrix<T>> LU<T>::LUDeCompose()
 {
-	//当主元为0时会失败
-	//理论《数值线性代数》 P18
+    std::vector<int> RowReturn;
+    std::vector<int> ColReturn;
+    std::vector<double> NumReturn;
 
-	int row = A.GetNumRow();
-	int col = A.GetNumCol();
+    int RowNum = A.GetNumRow();
+    int ColNum = A.GetNumCol();
 
-	L.Resize(row, col);
-	U.Resize(row, col);
-	L.SetZeros();
-	U.SetZeros();
+    Matrix<T> U(RowNum, ColNum);
+    Matrix<T> L(RowNum, ColNum);
+    //当主元为0时会失败
+    //理论《数值线性代数》 P18
+
+    int row = A.GetNumRow();
+    int col = A.GetNumCol();
+
+    L.Resize(row, col);
+    U.Resize(row, col);
+    L.SetZeros();
+    U.SetZeros();
 
 
-	for (int i = 0; i < row - 1; i++)
-	{
-		int reFlag = ithGaussFact(i);
-		if (reFlag == 0)
-		{
-			return 0;
-		}
-	}
+    for (int i = 0; i < row - 1; i++)
+    {
+        int reFlag = ithGaussFact(i);
+        if (reFlag == 0)
+        {
+            return 0;
+        }
+    }
 
-	for (int i = 0; i < row; i++)
-	{
-		for (int j = 0; j < col; j++)
-		{
-			if (i > j)
-			{
-				L(i, j) = A(i, j);
-			}
-			else if (i == j)
-			{
-				L(i, j) = 1;
-				U(i, j) = A(i, j);
-			}
-			else 
-			{
-				U(i, j) = A(i, j);
-			}
-		}
-	}
-	LUDecomposeFlag = 1;
-	return 1;
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (i > j)
+            {
+                L(i, j) = A(i, j);
+            }
+            else if (i == j)
+            {
+                L(i, j) = 1;
+                U(i, j) = A(i, j);
+            }
+            else
+            {
+                U(i, j) = A(i, j);
+            }
+        }
+    }
 
+    vector<Matrix<T>> RC;
+    RC.push_back(L,U);
+
+    return RC;
 }
 
 template <typename T>
-int LU<T>::FullPivotFact()
+vector<Matrix<T>> LU<T>::PQLUDeCompose()
 {
-	//全选主元三角分解
-	//具体理论参见《数值线性代数》 P21——P25
-	//对A矩阵的分解结果为
-	//PAQ = LU
 
-	int row = A.GetNumRow();
-	int col = A.GetNumCol();
+    //全选主元三角分解
+    //具体理论参见《数值线性代数》 P21——P25
+    //对A矩阵的分解结果为
+    //PAQ = LU
 
-	
-	P.Resize(row, col);
-	P.SetZeros();
-	Q.Resize(row, col);
-	Q.SetZeros();
-	L.Resize(row, col);
-	L.SetZeros();
-	U.Resize(row, col);
-	U.SetZeros();
-	
+    int row = A.GetNumRow();
+    int col = A.GetNumCol();
 
-	vector<Matrix<T>> PVec;
-	vector<Matrix<T>> QVec;
-	//vector<Matrix<T>> InvLiVec;
-
-	T Pivot;
-	int PivotRow;
-	int PivotCol;
-	for (int i = 0; i < row - 1; i++)
-	{
-		Matrix<T> PEach;
-		Matrix<T> QEach;
-		Matrix<T> InvLiEach;
-		A.FindMax(i, i, row - i, col - i, &Pivot, &PivotRow, &PivotCol);
-
-		if (abs(Pivot) < sqrt(EPS))
-		{
-			printf("矩阵奇异");
-			return 0;
-		}
-
-		PEach = ProducePorQMatrix(PivotRow, i);
-		QEach = ProducePorQMatrix(PivotCol, i);
-
-		cout << "Before" << endl;
-		cout << A << endl;
-		A = PEach * A * QEach;
-
-		cout << "After" << endl;
-		cout << A << endl;
-
-		PVec.push_back(PEach);
-		QVec.push_back(QEach);
-
-		int reFlag = ithGaussFact(i);
-		if (reFlag == 0)
-		{
-			return 0;
-		}
-
-		cout << "After i Fact" << endl;
-		cout << A << endl;
-
-		//InvLiVec.push_back(InvLiEach);
-	}
+    Matrix<T> P(row, col);
+    P.SetZeros();
+    Matrix<T> Q(row, col);
+    Q.SetZeros();
+    Matrix<T>L(row, col);
+    L.SetZeros();
+    Matrix<T>U(row, col);
+    U.SetZeros();
 
 
-	Matrix<T> InvLiPi;
-	for (int i = 0; i < QVec.size(); i++)
-	{
-		if (i == 0)
-		{
-			Q = QVec[i];
-			//L = InvLiVec[i];
-		}
-		else
-		{
-			Q *= QVec[i];
-			//L = PVec[i] * L*PVec[i] * InvLiVec[i];
-		}
-	}
+    vector<Matrix<T>> PVec;
+    vector<Matrix<T>> QVec;
+    //vector<Matrix<T>> InvLiVec;
 
-	for (int i = PVec.size() - 1; i >= 0; i--)
-	{
-		if (i == PVec.size() - 1)
-		{
-			P = PVec[i];
-		}
-		else
-		{
-			P *= PVec[i];
-		}
-	}
+    T Pivot;
+    int PivotRow;
+    int PivotCol;
+    for (int i = 0; i < row - 1; i++)
+    {
+        Matrix<T> PEach;
+        Matrix<T> QEach;
+        Matrix<T> InvLiEach;
+        A.FindMax(i, i, row - i, col - i, &Pivot, &PivotRow, &PivotCol);
 
-	/*Matrix<T> tmpI(LiPi.GetNumRow(), LiPi.GetNumCol());
-	tmpI.IdentityMatrix();
+        if (abs(Pivot) < sqrt(EPS))
+        {
+            printf("矩阵奇异");
+            return 0;
+        }
 
-	GaussSolver<T> GS(LiPi, tmpI);
-	GS.LowtriSolve();
+        PEach = ProducePorQMatrix(PivotRow, i);
+        QEach = ProducePorQMatrix(PivotCol, i);
 
-	InvLiPi = GS.getAns();*/
+        cout << "Before" << endl;
+        cout << A << endl;
+        A = PEach * A * QEach;
 
-	//L = P*InvLiPi;
-	for (int i = 0; i < row; i++)
-	{
-		for (int j = 0; j < col; j++)
-		{
-			if (i > j)
-			{
-				L(i, j) = A(i, j);
-			}
-			else if (i == j)
-			{
-				L(i, j) = 1;
-				U(i, j) = A(i, j);
-			}
-			else
-			{
-				U(i, j) = A(i, j);
-			}
-		}
-	}
+        cout << "After" << endl;
+        cout << A << endl;
 
-	LUDecomposeFlag = 1;
-	return 1;
+        PVec.push_back(PEach);
+        QVec.push_back(QEach);
+
+        int reFlag = ithGaussFact(i);
+        if (reFlag == 0)
+        {
+            return 0;
+        }
+
+        cout << "After i Fact" << endl;
+        cout << A << endl;
+
+        //InvLiVec.push_back(InvLiEach);
+    }
+
+
+    Matrix<T> InvLiPi;
+    for (int i = 0; i < QVec.size(); i++)
+    {
+        if (i == 0)
+        {
+            Q = QVec[i];
+            //L = InvLiVec[i];
+        }
+        else
+        {
+            Q *= QVec[i];
+            //L = PVec[i] * L*PVec[i] * InvLiVec[i];
+        }
+    }
+
+    for (int i = PVec.size() - 1; i >= 0; i--)
+    {
+        if (i == PVec.size() - 1)
+        {
+            P = PVec[i];
+        }
+        else
+        {
+            P *= PVec[i];
+        }
+    }
+
+
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (i > j)
+            {
+                L(i, j) = A(i, j);
+            }
+            else if (i == j)
+            {
+                L(i, j) = 1;
+                U(i, j) = A(i, j);
+            }
+            else
+            {
+                U(i, j) = A(i, j);
+            }
+        }
+    }
+
+    vector<Matrix<T>> RC;
+    RC.push_back(P,Q,L,U);
+    return RC;
 }
-
 
 template <typename T>
-int LU<T>::ColPivotFact()
+vector<Matrix<T>> LU<T>::PLUDeCompose()
 {
-	//列主元三角分解
-	//具体理论参见《数值线性代数》 P26
-	//对A矩阵的分解结果为
-	//PA = LU
 
-	int row = A.GetNumRow();
-	int col = A.GetNumCol();
+    //列主元三角分解
+    //具体理论参见《数值线性代数》 P26
+    //对A矩阵的分解结果为
+    //PA = LU
 
-
-	P.Resize(row, col);
-	P.SetZeros();
-	L.Resize(row, col);
-	L.SetZeros();
-	U.Resize(row, col);
-	U.SetZeros();
+    int row = A.GetNumRow();
+    int col = A.GetNumCol();
 
 
-	vector<Matrix<T>> PVec;
+    Matrix<T> P(row, col);
+    P.SetZeros();
+    Matrix<T>L(row, col);
+    L.SetZeros();
+    Matrix<T>U(row, col);
+    U.SetZeros();
 
-	T Pivot;
-	int PivotRow;
-	int PivotCol;
-	for (int i = 0; i < row - 1; i++)
-	{
-		Matrix<T> PEach;
-		Matrix<T> InvLiEach;
-		A.FindMax(i, i, row - i, 1, &Pivot, &PivotRow, &PivotCol);
 
-		if (abs(Pivot) < sqrt(EPS))
-		{
-			printf("矩阵奇异");
-			return 0;
-		}
+    vector<Matrix<T>> PVec;
 
-		PEach = ProducePorQMatrix(PivotRow, i);
+    T Pivot;
+    int PivotRow;
+    int PivotCol;
+    for (int i = 0; i < row - 1; i++)
+    {
+        Matrix<T> PEach;
+        Matrix<T> InvLiEach;
+        A.FindMax(i, i, row - i, 1, &Pivot, &PivotRow, &PivotCol);
 
-		cout << "Before" << endl;
-		cout << A << endl;
-		A = PEach * A;
+        if (abs(Pivot) < sqrt(EPS))
+        {
+            printf("矩阵奇异");
+            return 0;
+        }
 
-		cout << "After" << endl;
-		cout << A << endl;
+        PEach = ProducePorQMatrix(PivotRow, i);
 
-		PVec.push_back(PEach);
+        cout << "Before" << endl;
+        cout << A << endl;
+        A = PEach * A;
 
-		int reFlag = ithGaussFact(i);
-		if (reFlag == 0)
-		{
-			return 0;
-		}
+        cout << "After" << endl;
+        cout << A << endl;
 
-		cout << "After i Fact" << endl;
-		cout << A << endl;
+        PVec.push_back(PEach);
 
-	}
+        int reFlag = ithGaussFact(i);
+        if (reFlag == 0)
+        {
+            return 0;
+        }
 
-	for (int i = PVec.size() - 1; i >= 0; i--)
-	{
-		if (i == PVec.size() - 1)
-		{
-			P = PVec[i];
-		}
-		else
-		{
-			P *= PVec[i];
-		}
-	}
+        cout << "After i Fact" << endl;
+        cout << A << endl;
 
-	for (int i = 0; i < row; i++)
-	{
-		for (int j = 0; j < col; j++)
-		{
-			if (i > j)
-			{
-				L(i, j) = A(i, j);
-			}
-			else if (i == j)
-			{
-				L(i, j) = 1;
-				U(i, j) = A(i, j);
-			}
-			else
-			{
-				U(i, j) = A(i, j);
-			}
-		}
-	}
+    }
 
-	LUDecomposeFlag = 1;
-	return 1;
+    for (int i = PVec.size() - 1; i >= 0; i--)
+    {
+        if (i == PVec.size() - 1)
+        {
+            P = PVec[i];
+        }
+        else
+        {
+            P *= PVec[i];
+        }
+    }
+
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (i > j)
+            {
+                L(i, j) = A(i, j);
+            }
+            else if (i == j)
+            {
+                L(i, j) = 1;
+                U(i, j) = A(i, j);
+            }
+            else
+            {
+                U(i, j) = A(i, j);
+            }
+        }
+    }
+
+    vector<Matrix<T>> RC;
+    RC.push_back(P,L,U);
+
+    return RC;
 }
-
-//template <typename T>
-//int LU<T>::Decompose()
-//{
-//	std::vector<int> RowReturn;
-//	std::vector<int> ColReturn;
-//	std::vector<double> NumReturn;
-//
-//	int RowNum = A.GetNumRow();
-//	int ColNum = A.GetNumCol();
-//
-//	U.Resize(RowNum, ColNum);
-//	L.Resize(RowNum, ColNum);
-//	U = A;
-//
-//	ToRowEchelonForm<T>(U, RowReturn, ColReturn, NumReturn, FirstTranFormTimes);
-//
-//	L.IdentityMatrix();
-//	// 单位矩阵
-//
-//	for (int i = 0; i < RowReturn.size(); i++)
-//	{
-//		int rowreturn = RowReturn[i];
-//		int colreturn = ColReturn[i];
-//		double numreturn = NumReturn[i];
-//		L(rowreturn, colreturn) = -numreturn;
-//	}
-//
-//	LUDecomposeFlag = 1;
-//	return 1;
-//}
 
 template <typename T>
 int LU<T>::Det(T *Val)
@@ -507,18 +473,15 @@ int LU<T>::Det(T *Val)
 		cout << "错误，非方阵，不可计算行列式" << endl;
 		exit(1);
 	}
-	else if (RowNum == 1)
+    else if (RowNum == 1)
 	{
 		//只有一个元素
 		(*Val) = A(0, 0);
 		return 1;
 	}
 
-	if (Decompose() == 0)
-	{
-		printf("LU分解失败\n");
-		return 0;
-	}
+    vector<Matrix<T>> LUMatrix = LUDeCompose();
+    Matrix<T> U = LUMatrix[1];
 
 	(*Val) = U(0,0);
 
@@ -532,68 +495,8 @@ int LU<T>::Det(T *Val)
 		//做了奇数次第一类变换
 		(*Val) = -(*Val);
 	}
-	return 1;
-}
 
-template <typename T>
-int LU<T>::GetL(Matrix<T>& LReturn) const
-{
-	if (LUDecomposeFlag == 0)
-	{
-		printf("未进行LU分解\n");
-		return 0;
-	}
-	else
-	{
-		LReturn = L;
-		return 1;
-	}
+    return EXIT_SUCCESS;
 }
-
-template <typename T>
-int LU<T>::GetU(Matrix<T>& UReturn) const
-{
-	if (LUDecomposeFlag == 0)
-	{
-		printf("未进行LU分解\n");
-			return 0;
-	}
-	else
-	{
-		UReturn = U;
-		return 1;
-	}
-}
-
-template<typename T>
-int LU<T>::GetP(Matrix<T>& Pmat) const
-{
-	if (LUDecomposeFlag == 0)
-	{
-		printf("未进行LU分解\n");
-		return 0;
-	}
-	else
-	{
-		Pmat = P;
-		return 1;
-	}
-}
-
-template<typename T>
-int LU<T>::GetQ(Matrix<T>& Qmat) const
-{
-	if (LUDecomposeFlag == 0)
-	{
-		printf("未进行LU分解\n");
-		return 0;
-	}
-	else
-	{
-		Qmat = Q;
-		return 1;
-	}
-}
-
 
 #endif

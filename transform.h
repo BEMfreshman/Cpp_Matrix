@@ -1,27 +1,27 @@
-﻿#ifndef __TRANSFORM_H__
-#define __TRANSFORM_H__
+﻿#ifndef TRANSFORM_H
+#define TRANSFORM_H
 #include <vector>
 #include "Matrix.h"
 
 
 //2017.09.07 尚未测试
 template<typename DataType>
-Matrix<DataType> ToRowEchelonForm(const Matrix<DataType>& mat, std::vector<int>& RowReturn,
-	std::vector<int>& ColReturn, std::vector<double>& NumReturn, int& FirstTransFormTimes)
+Matrix<DataType> ToRowEchelonForm(const Matrix<DataType>& mat, std::vector<size_t>& RowReturn,
+    std::vector<size_t>& ColReturn, std::vector<double>& NumReturn, size_t& FirstTransFormTimes)
 {
 	//采用消元将一个矩阵变为行最简矩阵
 	//RowReturn，ColReturn，NumReturn返回的是消元时对哪一行哪一列加上了哪个数字将这一列的非主元项目削减为0（在LU分解中用于L矩阵的产生）
 	//FirstTransFormTimes表示做了几次第一类变换（行变换）
 
 	FirstTransFormTimes = 0; //初始化为0
-	int Row = mat.GetNumRow();
-	int Col = mat.GetNumCol();
+    size_t Row = mat.GetNumRow();
+    size_t Col = mat.GetNumCol();
 	Matrix<DataType> matOutput;
 	//输出行最简矩阵
 	matOutput = mat;
 
-	int row_counter = 0;
-	int col_counter = 0;
+    size_t row_counter = 0;
+    size_t col_counter = 0;
 	DataType PivotElement;
 
 	for (col_counter = 0; col_counter < Col; col_counter++)
@@ -33,7 +33,7 @@ Matrix<DataType> ToRowEchelonForm(const Matrix<DataType>& mat, std::vector<int>&
 		//如果需要交换，则采用初等变换进行
 
 		PivotElement = matOutput(row_counter, row_counter);
-		int tmp = 0;
+        size_t tmp = 0;
 		while (abs(PivotElement) < EPS)
 		{
 			// 如果主元为0则在该列一直寻找，直到找到一个主元不为0的数字
@@ -66,7 +66,7 @@ Matrix<DataType> ToRowEchelonForm(const Matrix<DataType>& mat, std::vector<int>&
 
 
 
-		for (int tmp_row_counter = row_counter + 1; tmp_row_counter < Col; tmp_row_counter++)
+        for (size_t tmp_row_counter = row_counter + 1; tmp_row_counter < Col; tmp_row_counter++)
 		{
 			//从对角的下一行开始
 			DataType num = matOutput(tmp_row_counter, col_counter);
@@ -84,19 +84,19 @@ Matrix<DataType> ToRowEchelonForm(const Matrix<DataType>& mat, std::vector<int>&
 
 
 template<typename DataType>
-Matrix<DataType>& ToRowEchelonForm(Matrix<DataType>& mat, std::vector<int>& RowReturn,
-	std::vector<int>& ColReturn, std::vector<double>& NumReturn, int& FirstTransFormTimes)
+Matrix<DataType>& ToRowEchelonForm(Matrix<DataType>& mat, std::vector<size_t>& RowReturn,
+    std::vector<size_t>& ColReturn, std::vector<double>& NumReturn, size_t& FirstTransFormTimes)
 {
 	//采用消元将一个矩阵变为行最简矩阵
 	//RowReturn，ColReturn，NumReturn返回的是消元时对哪一行哪一列加上了哪个数字将这一列的非主元项目削减为0（在LU分解中用于L矩阵的产生）
 	//FirstTransFormTimes表示做了几次第一类变换（行变换）
 
 	FirstTransFormTimes = 0; //初始化为0
-	int Row = mat.GetNumRow();
-	int Col = mat.GetNumCol();
+    size_t Row = mat.GetNumRow();
+    size_t Col = mat.GetNumCol();
 
-	int row_counter = 0;
-	int col_counter = 0;
+    size_t row_counter = 0;
+    size_t col_counter = 0;
 	DataType PivotElement;
 
 	for (col_counter = 0; col_counter < Col; col_counter++)
@@ -108,7 +108,7 @@ Matrix<DataType>& ToRowEchelonForm(Matrix<DataType>& mat, std::vector<int>& RowR
 		//如果需要交换，则采用初等变换进行
 
 		PivotElement = mat(row_counter, row_counter);
-		int tmp = 0;
+        size_t tmp = 0;
 		while (abs(PivotElement) < EPS)
 		{
 			// 如果主元为0则在该列一直寻找，直到找到一个主元不为0的数字
@@ -141,7 +141,7 @@ Matrix<DataType>& ToRowEchelonForm(Matrix<DataType>& mat, std::vector<int>& RowR
 
 
 
-		for (int tmp_row_counter = row_counter + 1; tmp_row_counter < Col; tmp_row_counter++)
+        for (size_t tmp_row_counter = row_counter + 1; tmp_row_counter < Col; tmp_row_counter++)
 		{
 			//从对角的下一行开始
 			DataType num = mat(tmp_row_counter, col_counter);

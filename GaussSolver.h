@@ -1,5 +1,5 @@
-#ifndef _GAUSSSOLVER_H__
-#define _GAUSSSOLVER_H_
+#ifndef GAUSSSOLVER_H
+#define GAUSSSOLVER_H
 
 #include <iostream>
 #include <vector>
@@ -46,10 +46,10 @@ int GaussSolver<T>::LowtriSolve()
 	//解下三角形矩阵
 	//采用前带法
 
-	int row = A.GetNumRow();
+    size_t row = A.GetNumRow();
 
 	ans.Resize(b.GetNumRow(), 1);
-	for (int i = 0; i < A.GetNumRow() - 1; i++)
+    for (size_t i = 0; i < A.GetNumRow() - 1; i++)
 	{
 		Matrix<T> bn(b.GetNumRow() - i - 1, 1);
 		Matrix<T> An(b.GetNumRow() - i - 1, 1);
@@ -65,7 +65,7 @@ int GaussSolver<T>::LowtriSolve()
 
 	ans(row - 1, 0) = b(row - 1, 0) / A(row - 1, row - 1);
 
-	return 1;
+    return EXIT_SUCCESS;
 
 }
 
@@ -73,6 +73,22 @@ template<typename T>
 const Matrix<T> GaussSolver<T>::getAns() const
 {
 	return ans;
+}
+
+template<typename T>
+int GaussSolver<T>::FullPivotSolve()          //全选主元消去
+{
+
+
+
+}
+
+template<typename T>
+int GaussSolver<T>::ColPivotSolve()           //列主元消去
+{
+
+
+
 }
 
 
