@@ -121,7 +121,7 @@ private:
     size_t Size;
 	T** p1;
 
-    Mat PetMat;            //Petsc矩阵表示方法
+//    Mat PetMat;            //Petsc矩阵表示方法
 
 
 private:
@@ -130,7 +130,7 @@ private:
 
 	void Swap(Matrix<T>& mat);
 
-    void BuildPETSCMat();
+//    void BuildPETSCMat();
 };
 
 
@@ -308,7 +308,7 @@ Matrix<T>::~Matrix()
 {
     DeAllocate();
 
-    CHKERRQ(MatDestroy(&PetMat));
+
 }
 
 template<typename T>
@@ -534,12 +534,22 @@ Matrix<T>& Matrix<T>::operator /= (const T num)
 template<typename T>
 T& Matrix<T>::operator ()(size_t index_row,size_t index_col)
 {
+    if(index_row >= NumRow || index_col >= NumCol)
+    {
+        throw out_of_range("Out of dimension");
+    }
+
+
     return p1[index_row][index_col];
 }
 
 template<typename T>
 const T Matrix<T>::operator ()(size_t index_row,size_t index_col) const
 {
+    if(index_row >= NumRow || index_col >= NumCol)
+    {
+        throw out_of_range("Out of dimension");
+    }
     return p1[index_row][index_col];
 }
 
@@ -792,54 +802,54 @@ const Matrix<T> Matrix<T>::TransPose() const
 	return mat;
 }
 
-template<typename T>
-void Matrix<T>::BuildPETSCMat()
-{
-    PetscErrorCode ierr;
-    PetscScalar *a;
-    PetscBool bflag;
+//template<typename T>
+//void Matrix<T>::BuildPETSCMat()
+//{
+//    PetscErrorCode ierr;
+//    PetscScalar *a;
+//    PetscBool bflag;
 
-    ierr = PetscInitialized(&bflag);
-    if(ierr)
-    {
-        throw runtime_error("Check Petsc Initialized Failed");
-    }
+//    ierr = PetscInitialized(&bflag);
+//    if(ierr)
+//    {
+//        throw runtime_error("Check Petsc Initialized Failed");
+//    }
 
-    if(bflag == false)
-    {
-        throw runtime_error("Petsc didn't initialize");
-    }
-
-
-    ierr = MatDestroy(& PetMat);
+//    if(bflag == false)
+//    {
+//        throw runtime_error("Petsc didn't initialize");
+//    }
 
 
-    PetscInt RowNum = static_cast<PetscInt>(GetNumRow());
-    PetscInt ColNum = static_cast<PetscInt>(GetNumCol());
-
-    PetscInt Num = static_cast<PetscInt>(GetNumData());
-    ierr = PetscMalloc1((PetscInt)Num,&a);CHKERRQ(ierr);
+//    ierr = MatDestroy(& PetMat);
 
 
-    //充填a
-    for(PetscInt i = 0; i < RowNum;i++)
-    {
-        for(PetscInt j = 0 ; j <ColNum;j++)
-        {
-            a[i+j*ColNum] = p1[i][j];
-        }
-    }
+//    PetscInt RowNum = static_cast<PetscInt>(GetNumRow());
+//    PetscInt ColNum = static_cast<PetscInt>(GetNumCol());
 
-    ierr = MatCreate(MPI_COMM_SELF,&PetMat);CHKERRQ(ierr);
-    ierr = MatSetSizes(PetMat,RowNum,ColNum,RowNum,ColNum);CHKERRQ(ierr);
-    ierr = MatSetType(PetMat,MATSEQDENSE);CHKERRQ(ierr);   //稠密矩阵
-    ierr = MatSeqDenseSetPreallocation(PetMat,a);CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+//    PetscInt Num = static_cast<PetscInt>(GetNumData());
+//    ierr = PetscMalloc1((PetscInt)Num,&a);CHKERRQ(ierr);
 
-    ierr = PetscFree(a);CHKERRQ(ierr);
 
-}
+//    //充填a
+//    for(PetscInt i = 0; i < RowNum;i++)
+//    {
+//        for(PetscInt j = 0 ; j <ColNum;j++)
+//        {
+//            a[i+j*ColNum] = p1[i][j];
+//        }
+//    }
+
+//    ierr = MatCreate(MPI_COMM_SELF,&PetMat);CHKERRQ(ierr);
+//    ierr = MatSetSizes(PetMat,RowNum,ColNum,RowNum,ColNum);CHKERRQ(ierr);
+//    ierr = MatSetType(PetMat,MATSEQDENSE);CHKERRQ(ierr);   //稠密矩阵
+//    ierr = MatSeqDenseSetPreallocation(PetMat,a);CHKERRQ(ierr);
+//    ierr = MatAssemblyBegin(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+//    ierr = MatAssemblyEnd(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+//    ierr = PetscFree(a);CHKERRQ(ierr);
+
+//}
 
 
 

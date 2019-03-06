@@ -15,7 +15,6 @@ class LU
 public:
 	LU();
 	LU(const Matrix<T>& A);
-	LU(const Matrix<T>& A, const Matrix<T>& b);
 
 	~LU();
 
@@ -38,10 +37,6 @@ private:
 	int FirstTranFormTimes;
 
 	Matrix<T> A;
-	Matrix<T> b;
-
-	Matrix<T> P;
-	Matrix<T> Q;
 
 private:
 	const Matrix<T> ProducePorQMatrix(int p, int q);
@@ -67,12 +62,6 @@ template<typename T>
 LU<T>::LU(const Matrix<T>& A_) :A(A_), FirstTranFormTimes(0), LUDecomposeFlag(0)
 {
 	
-}
-
-template<typename T>
-LU<T>::LU(const Matrix<T>& A_, const Matrix<T>& b_) :A(A_), b(b_), FirstTranFormTimes(0), LUDecomposeFlag(0)
-{
-
 }
 
 template<typename T>
