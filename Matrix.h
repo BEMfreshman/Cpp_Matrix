@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "Vector.h"
+
 #define EPS 1e-10
 
 using namespace std;
@@ -38,6 +40,7 @@ public:
     const Matrix<T> operator -(const T num) const;
 	const Matrix<T> operator -() const;
     const Matrix<T> operator *(const Matrix<T>& mat) const;
+    const Vector<T> operator *(const Vector<T>& vec) const;
     const Matrix<T> operator *(const T num) const;
 
     Matrix<T>& operator +=(const Matrix<T>& mat);
@@ -438,6 +441,31 @@ const Matrix<T> Matrix<T>::operator *(const T num) const
         }
     }
     return res_mat;
+}
+
+template <typename T>
+const Vector<T> Matrix<T>::operator *(const Vector<T>& vec) const
+{
+    Vector<T> RC(NumRow);
+
+    if(NumCol != vec.getNum())
+    {
+        throw runtime_error("dimension is not equal");
+    }
+
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        Vector<T> RowVec(NumCol);
+        for(size_t j = 0 ; j < NumCol;j++)
+        {
+            RowVec.newValue(j,p1[i][j]);
+        }
+
+        T res = RowVec * vec;
+        RC.newValue(i,res);
+    }
+
+    return RC;
 }
 
 template<typename T>
