@@ -1,5 +1,5 @@
-#ifndef __BLOCK_H_
-#define __BLOCK_H_
+#ifndef BLOCK_H
+#define BLOCK_H
 
 
 template<typename T>

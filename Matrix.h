@@ -1,8 +1,7 @@
-﻿#ifndef __MATRIX_H_
-#define __MATRIX_H_
+﻿#ifndef MATRIX_H_
+#define MATRIX_H_
 
-
-
+#include <petscmat.h>
 
 #include <iostream>
 #include <assert.h>
@@ -17,18 +16,15 @@ class Matrix
 {
 public:
     Matrix();
-    Matrix(int Row, int Col);
+    Matrix(size_t Row, size_t Col);
     Matrix(const Matrix<T>& mat);
     Matrix<T>& operator=(const Matrix<T>& mat);  //赋值操作
-    Matrix(int Row, int Col, T** arr);
-    Matrix(int Row, int Col, T* arr, const string& StorageType);
+    Matrix(size_t Row, size_t Col, T** arr);
+    Matrix(size_t Row, size_t Col, T* arr, const string& StorageType);
     //采用数组初始化
     //第一二个参数为本矩阵的行数和列数
     //第三个参数为矩阵初始化的数组
     //第四个为第三个参数中的元素个数
-
-	//初始化操作符
-
 
     /***********
      *重载操作符*
@@ -50,11 +46,25 @@ public:
     Matrix<T>& operator *=(const T num);
 	Matrix<T>& operator /= (const T num);
 
-    T& operator ()(int index_row,int index_col);//将函数操作符重载，实现寻址操作符功能
-    const T operator()(int index_row,int index_col) const;//供常对象使用
+    T& operator ()(size_t index_row,size_t index_col);//将函数操作符重载，实现寻址操作符功能
+    const T operator()(size_t index_row,size_t index_col) const;//供常对象使用
 
-    friend ostream& operator << <T>(ostream& os,const Matrix<T>& mat);//重载输出操作符
 
+    friend ostream& operator<< (ostream& os,const Matrix<T>& mat)//重载输出操作符
+    {
+        size_t Row = mat.GetNumRow();
+        size_t Col = mat.GetNumCol();
+
+        for (size_t i = 0; i < Row; i++)
+        {
+            for (size_t j = 0; j < Col; j++)
+            {
+                os << mat(i, j) << " ";
+            }
+            os << endl;
+        }
+        return os;
+    }
 	
 	
 
@@ -63,69 +73,71 @@ public:
      **************/
     void SetZeros();   //所有元素置零
     void IdentityMatrix();  // 单位矩阵
-	void Resize(int Row, int Col); //重新分配
+    void Resize(size_t Row, size_t Col); //重新分配
 
 
 	//Matrix<T>& TransPose();
 	const Matrix<T> TransPose() const;
 
-	Matrix<T>& FirstTypeTransForm(int Row_One, int Row_Two);
-	const Matrix<T> FirstTypeTransForm(int Row_One, int Row_Two) const;
+    Matrix<T>& FirstTypeTransForm(size_t Row_One, size_t Row_Two);
+    const Matrix<T> FirstTypeTransForm(size_t Row_One, size_t Row_Two) const;
 	//第一类初等变换---交换两行
 
-	Matrix<T>& SecondTypeTransForm(int Row, double Num);
-	const Matrix<T> SecondTypeTransForm(int Row, double Num) const;
+    Matrix<T>& SecondTypeTransForm(size_t Row, double Num);
+    const Matrix<T> SecondTypeTransForm(size_t Row, double Num) const;
 	//第二类初等变换---某一行乘以一个数
 	// Row---待乘数的行
 	// Num---需要乘以的数
 
-	Matrix<T>& ThirdTypeTransForm(int Row_One, int Row_Two, double Num);
-	const Matrix<T> ThirdTypeTransForm(int Row_One, int Row_Two, double Num) const;
+    Matrix<T>& ThirdTypeTransForm(size_t Row_One, size_t Row_Two, double Num);
+    const Matrix<T> ThirdTypeTransForm(size_t Row_One, size_t Row_Two, double Num) const;
 	//第三类变换----某一行的倍数加到另一行
 	//Row_One ----- 需要乘数字的一行
 	//Row_Two ----- 待加的一行
 	//Num    ------ 乘数
 
 
-	const Matrix<T> ExtractBlock(int RowStart, int ColStart, int RowNumToBlock, int ColNumToBlock) const;
-	void SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNumtoSet, const Matrix<T>& mat);
+    const Matrix<T> ExtractBlock(size_t RowStart, size_t ColStart, size_t RowNumToBlock, size_t ColNumToBlock) const;
+    void SetBlock(size_t RowStart, size_t ColStart, size_t RowNumToSet, size_t ColNumtoSet, const Matrix<T>& mat);
 
-	void FindMax(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind,T* Value,int* row,int* col);
-	void FindMin(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind,T* Value,int* row,int* col);
+    void FindMax(size_t RowStart, size_t ColStart, size_t RowNumToFind, size_t ColNumToFind,T* Value,size_t* row,size_t* col);
+    void FindMin(size_t RowStart, size_t ColStart, size_t RowNumToFind, size_t ColNumToFind,T* Value,size_t* row,size_t* col);
 		
 
 
-    inline int GetNumRow();
-	inline int GetNumRow() const;
-    inline int GetNumCol();
-	inline int GetNumCol() const;
-    inline int GetNumData();
-
-    
-
+    inline size_t GetNumRow();
+    inline size_t GetNumRow() const;
+    inline size_t GetNumCol();
+    inline size_t GetNumCol() const;
+    inline size_t GetNumData();
 
 	~Matrix();
 
+
+
 private:
-	int NumRow;
-	int NumCol;
-	int Size;
+    size_t NumRow;
+    size_t NumCol;
+    size_t Size;
 	T** p1;
 
+//    Mat PetMat;            //Petsc矩阵表示方法
+
 
 private:
-	void Allocate(int Num_Row,int Num_Col);
+    void Allocate(size_t Num_Row,size_t Num_Col);
 	void DeAllocate();
 
 	void Swap(Matrix<T>& mat);
-	
+
+//    void BuildPETSCMat();
 };
 
 
 
 
 template<typename T>
-void Matrix<T>::Allocate(int NumRow,int NumCol)
+void Matrix<T>::Allocate(size_t NumRow,size_t NumCol)
 {
     //分配内存
     if(NumRow <= 0 || NumCol <=0)
@@ -139,7 +151,7 @@ void Matrix<T>::Allocate(int NumRow,int NumCol)
         Size = NumRow * NumCol;
         p1 = new T* [NumRow];
         assert(p1 != NULL);
-        for (int i = 0; i < NumRow; ++i)
+        for (size_t i = 0; i < NumRow; ++i)
         {
             p1[i] = new T[NumCol]; // 指向二维数组每行的开头位置
             assert(p1[i] != NULL);
@@ -155,7 +167,7 @@ void Matrix<T>::DeAllocate()
     //释放矩阵所占有的内存资源
     //并将NumRow，NumCol重置为0
 
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
         delete [] p1[i];
         p1[i] = NULL;
@@ -176,9 +188,9 @@ void Matrix<T>::Swap(Matrix<T>& mat)
 	assert(NumCol = mat.NumCol);
 	assert(NumRow = mat.NumRow);
 
-	for (int i = 0; i < NumRow; i++)
+    for (size_t i = 0; i < NumRow; i++)
 	{
-		for (int j = 0; j < NumCol; j++)
+        for (size_t j = 0; j < NumCol; j++)
 		{
 			tmp = mat.p1[i][j];
 			mat.p1[i][j] = p1[i][j];
@@ -194,7 +206,7 @@ Matrix<T>::Matrix() :NumRow(0), NumCol(0), Size(0), p1(NULL)
 }
 
 template<typename T>
-Matrix<T>::Matrix(int Row, int Col) :NumRow(Row), NumCol(Col)
+Matrix<T>::Matrix(size_t Row, size_t Col) :NumRow(Row), NumCol(Col)
 {
     Allocate(NumRow,NumCol);
 }
@@ -202,9 +214,9 @@ template<typename T>
 Matrix<T>::Matrix(const Matrix& mat) : NumRow(mat.NumRow), NumCol(mat.NumCol)
 {
     Allocate(NumRow,NumCol);
-    for (int i = 0; i < NumRow; ++i)
+    for (size_t i = 0; i < NumRow; ++i)
     {
-        for (int j = 0; j < NumCol; ++j)
+        for (size_t j = 0; j < NumCol; ++j)
         {
             p1[i][j] = mat.p1[i][j];
         }
@@ -220,41 +232,45 @@ Matrix<T>& Matrix<T>::operator =(const Matrix<T>& mat)
         //防止自赋值
         DeAllocate();
         Allocate(mat.NumRow,mat.NumCol);
-        for (int i = 0; i < NumRow; ++i)
+        for (size_t i = 0; i < NumRow; ++i)
         {
-            for (int j = 0; j < NumCol; ++j)
+            for (size_t j = 0; j < NumCol; ++j)
             {
                 p1[i][j] = mat.p1[i][j];
             }
         }
     }
+
+
     return *this;
 }
 
 template<typename T>
-Matrix<T>::Matrix(int Row, int Col, T** arr):NumRow(Row),NumCol(Col)
+Matrix<T>::Matrix(size_t Row, size_t Col, T** arr):NumRow(Row),NumCol(Col)
 {
 
     Allocate(NumRow,NumCol);  //分配存储空间
-    for (int i = 0;i < NumRow;++i)
+    for (size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             p1[i][j] = arr[i][j];
         }
     }
+
+
 }
 
 template<typename T>
-Matrix<T>::Matrix(int Row,int Col,T * arr,const string& Storage)
+Matrix<T>::Matrix(size_t Row,size_t Col,T * arr,const string& Storage)
     :NumRow(Row),NumCol(Col)
 {
     Allocate(NumRow,NumCol);
     if(Storage == "Row")
     {
-        for(int i= 0;i < Row;i++)
+        for(size_t i= 0;i < Row;i++)
         {
-            for(int j = 0;j < Col;j++)
+            for(size_t j = 0;j < Col;j++)
             {
                 p1[i][j] = arr[Col * i + j];
             }
@@ -266,9 +282,9 @@ Matrix<T>::Matrix(int Row,int Col,T * arr,const string& Storage)
 template<typename T>
 void Matrix<T>::SetZeros()
 {
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for (int j = 0;j < NumCol;++j)
+        for (size_t j = 0;j < NumCol;++j)
         {
             p1[i][j] = T (0);
         }
@@ -280,7 +296,7 @@ void Matrix<T>::IdentityMatrix()
 {
     this->SetZeros();
     //首先全部置为0；
-    for(int i = 0;i < NumRow;i++)
+    for(size_t i = 0;i < NumRow;i++)
     {
         p1[i][i] = T (1);
     }
@@ -291,6 +307,8 @@ template<typename T>
 Matrix<T>::~Matrix()
 {
     DeAllocate();
+
+
 }
 
 template<typename T>
@@ -303,9 +321,9 @@ const Matrix<T> Matrix<T>::operator +(const Matrix<T>& mat) const
     }
     Matrix<T> res_mat(NumRow,NumCol);
 
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             res_mat.p1[i][j] = p1[i][j] + mat.p1[i][j];
         }
@@ -318,9 +336,9 @@ const Matrix<T> Matrix<T>::operator +(const T num) const
 {
     //向量与标量做加法
     Matrix<T> res_mat(NumRow,NumCol);
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             res_mat.p1[i][j] = p1[i][j] + num;
         }
@@ -338,9 +356,9 @@ const Matrix<T> Matrix<T>::operator -(const Matrix<T>& mat) const
     }
     Matrix<T> res_mat(NumRow,NumCol);
 
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             res_mat.p1[i][j] = p1[i][j] - mat.p1[i][j];
         }
@@ -353,9 +371,9 @@ const Matrix<T> Matrix<T>::operator -(const T num) const
 {
     //向量与标量做加法
     Matrix<T> res_mat(NumRow,NumCol);
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             res_mat.p1[i][j] = p1[i][j] - num;
         }
@@ -367,9 +385,9 @@ template<typename T>
 const Matrix<T> Matrix<T>::operator -() const
 {
 	Matrix<T> res_mat(NumRow, NumCol);
-	for (int i = 0; i < NumRow; ++i)
+    for (size_t i = 0; i < NumRow; ++i)
 	{
-		for (int j = 0; j < NumCol; ++j)
+        for (size_t j = 0; j < NumCol; ++j)
 		{
 			res_mat.p1[i][j] = -p1[i][j];
 		}
@@ -389,11 +407,11 @@ const Matrix<T> Matrix<T>::operator *(const Matrix<T>& mat) const
     Matrix<T> res_mat(NumRow,mat.NumCol);
 	res_mat.SetZeros();
 
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < mat.NumCol;++j)
+        for(size_t j = 0;j < mat.NumCol;++j)
         {
-            for(int k = 0;k < NumCol;++k)
+            for(size_t k = 0;k < NumCol;++k)
             {
                 res_mat.p1[i][j] += p1[i][k]*mat.p1[k][j];
             }
@@ -406,9 +424,9 @@ template<typename T>
 const Matrix<T> Matrix<T>::operator *(const T num) const
 {
     Matrix<T> res_mat(NumRow,NumCol);
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             res_mat.p1[i][j] = p1[i][j]*num;
         }
@@ -424,9 +442,9 @@ Matrix<T>& Matrix<T>::operator +=(const Matrix<T>& mat)
         cout << "两个矩阵之间的维数不相等，程序退出" << endl;
         exit(0);
     }
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             p1[i][j] += mat.p1[i][j];
         }
@@ -437,9 +455,9 @@ Matrix<T>& Matrix<T>::operator +=(const Matrix<T>& mat)
 template<typename T>
 Matrix<T>& Matrix<T>::operator +=(const T num)
 {
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             p1[i][j] += num;
         }
@@ -455,9 +473,9 @@ Matrix<T>& Matrix<T>::operator -=(const Matrix<T>& mat)
         cout << "两个矩阵之间的维数不相等，程序退出" << endl;
         exit(0);
     }
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             p1[i][j] -= mat.p1[i][j];
         }
@@ -468,9 +486,9 @@ Matrix<T>& Matrix<T>::operator -=(const Matrix<T>& mat)
 template<typename T>
 Matrix<T>& Matrix<T>::operator -=(const T num)
 {
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             p1[i][j] -= num;
         }
@@ -490,9 +508,9 @@ Matrix<T>& Matrix<T>::operator *=(const Matrix<T>& mat)
 template<typename T>
 Matrix<T>& Matrix<T>::operator *=(const T num)
 {
-    for(int i = 0;i < NumRow;++i)
+    for(size_t i = 0;i < NumRow;++i)
     {
-        for(int j = 0;j < NumCol;++j)
+        for(size_t j = 0;j < NumCol;++j)
         {
             p1[i][j] *= num;
         }
@@ -503,9 +521,9 @@ Matrix<T>& Matrix<T>::operator *=(const T num)
 template<typename T>
 Matrix<T>& Matrix<T>::operator /= (const T num)
 {
-	for (int i = 0; i < NumRow; ++i)
+    for (size_t i = 0; i < NumRow; ++i)
 	{
-		for (int j = 0; j < NumCol; ++j)
+        for (size_t j = 0; j < NumCol; ++j)
 		{
 			p1[i][j] /= num;
 		}
@@ -514,50 +532,60 @@ Matrix<T>& Matrix<T>::operator /= (const T num)
 }
 
 template<typename T>
-T& Matrix<T>::operator ()(int index_row,int index_col)
+T& Matrix<T>::operator ()(size_t index_row,size_t index_col)
 {
+    if(index_row >= NumRow || index_col >= NumCol)
+    {
+        throw out_of_range("Out of dimension");
+    }
+
+
     return p1[index_row][index_col];
 }
 
 template<typename T>
-const T Matrix<T>::operator ()(int index_row,int index_col) const
+const T Matrix<T>::operator ()(size_t index_row,size_t index_col) const
 {
+    if(index_row >= NumRow || index_col >= NumCol)
+    {
+        throw out_of_range("Out of dimension");
+    }
     return p1[index_row][index_col];
 }
 
 
 template<typename T>
-inline int Matrix<T>::GetNumRow()
+inline size_t Matrix<T>::GetNumRow()
 {
     return NumRow;
 }
 
 template<typename T>
-inline int Matrix<T>::GetNumRow() const
+inline size_t Matrix<T>::GetNumRow() const
 {
 	return NumRow;
 }
 
 template<typename T>
-inline int Matrix<T>::GetNumCol()
+inline size_t Matrix<T>::GetNumCol()
 {
     return NumCol;
 }
 
 template<typename T>
-inline int Matrix<T>::GetNumCol() const
+inline size_t Matrix<T>::GetNumCol() const
 {
 	return NumCol;
 }
 
 template<typename T>
-inline int Matrix<T>::GetNumData()
+inline size_t Matrix<T>::GetNumData()
 {
     return Size;
 }
 
 template<typename T>
-const Matrix<T> Matrix<T>::ExtractBlock(int RowStart, int ColStart, int RowNumToBlock, int ColNumToBlock) const
+const Matrix<T> Matrix<T>::ExtractBlock(size_t RowStart, size_t ColStart, size_t RowNumToBlock, size_t ColNumToBlock) const
 {
 	//抽取一个Block出来
 
@@ -566,9 +594,9 @@ const Matrix<T> Matrix<T>::ExtractBlock(int RowStart, int ColStart, int RowNumTo
 
 
 	Matrix<T> tmp(RowNumToBlock, ColNumToBlock);
-	for (int i = RowStart; i < RowStart+ RowNumToBlock; i++)
+    for (size_t i = RowStart; i < RowStart+ RowNumToBlock; i++)
 	{
-		for (int j = ColStart; j < ColStart + ColNumToBlock; j++)
+        for (size_t j = ColStart; j < ColStart + ColNumToBlock; j++)
 		{
 			tmp.p1[i - RowStart][j - ColStart] = p1[i][j];
 		}
@@ -577,7 +605,7 @@ const Matrix<T> Matrix<T>::ExtractBlock(int RowStart, int ColStart, int RowNumTo
 }
 
 template<typename T>
-void Matrix<T>::SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNumToSet, const Matrix<T>& mat)
+void Matrix<T>::SetBlock(size_t RowStart, size_t ColStart, size_t RowNumToSet, size_t ColNumToSet, const Matrix<T>& mat)
 {
 	assert(RowStart + RowNumToSet <= NumRow);
 	assert(ColStart + ColNumToSet <= NumCol);
@@ -585,9 +613,9 @@ void Matrix<T>::SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNum
 	assert(RowNumToSet <= mat.NumRow);
 	assert(ColNumToSet <= mat.NumCol);
 
-	for (int i = 0; i < RowNumToSet; i++)
+    for (size_t i = 0; i < RowNumToSet; i++)
 	{
-		for (int j = 0; j < ColNumToSet; j++)
+        for (size_t j = 0; j < ColNumToSet; j++)
 		{
 			p1[i + RowStart][j + ColStart] = mat.p1[i][j];
 		}
@@ -595,15 +623,15 @@ void Matrix<T>::SetBlock(int RowStart, int ColStart, int RowNumToSet, int ColNum
 }
 
 template<typename T>
-void Matrix<T>::FindMax(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind, T* Value, int* row, int* col)
+void Matrix<T>::FindMax(size_t RowStart, size_t ColStart, size_t RowNumToFind, size_t ColNumToFind, T* Value, size_t* row, size_t* col)
 {
 	assert(RowStart + RowNumToFind <= NumRow);
 	assert(ColStart + ColNumToFind <= NumCol);
 
 	T max = p1[RowStart][ColStart];
-	for (int i = RowStart; i < RowStart + RowNumToFind; i++)
+    for (size_t i = RowStart; i < RowStart + RowNumToFind; i++)
 	{
-		for (int j = ColStart; j < ColStart + ColNumToFind; j++)
+        for (size_t j = ColStart; j < ColStart + ColNumToFind; j++)
 		{
 			if (max < p1[i][j])
 			{
@@ -618,15 +646,15 @@ void Matrix<T>::FindMax(int RowStart, int ColStart, int RowNumToFind, int ColNum
 }
 
 template<typename T>
-void Matrix<T>::FindMin(int RowStart, int ColStart, int RowNumToFind, int ColNumToFind, T* Value, int* row, int* col)
+void Matrix<T>::FindMin(size_t RowStart, size_t ColStart, size_t RowNumToFind, size_t ColNumToFind, T* Value, size_t* row, size_t* col)
 {
 	assert(RowStart + RowNumToFind <= NumRow);
 	assert(ColStart + ColNumToFind <= NumCol);
 
 	T min = p1[RowStart][ColStart];
-	for (int i = RowStart; i < RowStart + RowNumToFind; i++)
+    for (size_t i = RowStart; i < RowStart + RowNumToFind; i++)
 	{
-		for (int j = ColStart; j < ColStart + ColNumToFind; j++)
+        for (size_t j = ColStart; j < ColStart + ColNumToFind; j++)
 		{
 			if (min > p1[i][j])
 			{
@@ -642,7 +670,7 @@ void Matrix<T>::FindMin(int RowStart, int ColStart, int RowNumToFind, int ColNum
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two)
+Matrix<T>& Matrix<T>::FirstTypeTransForm(size_t Row_One, size_t Row_Two)
 {
 	//交换两行
 
@@ -656,7 +684,7 @@ Matrix<T>& Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two)
 
 
 template<typename T>
-const Matrix<T> Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two) const
+const Matrix<T> Matrix<T>::FirstTypeTransForm(size_t Row_One, size_t Row_Two) const
 {
 	//交换两行
 
@@ -673,7 +701,7 @@ const Matrix<T> Matrix<T>::FirstTypeTransForm(int Row_One, int Row_Two) const
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::SecondTypeTransForm(int Row, double Num)
+Matrix<T>& Matrix<T>::SecondTypeTransForm(size_t Row, double Num)
 {
 //第二类初等变换---某一行乘以一个数
 // Row---待乘数的行
@@ -681,7 +709,7 @@ Matrix<T>& Matrix<T>::SecondTypeTransForm(int Row, double Num)
 	
 	T * row_tmp = p1[Row];
 
-	for (int i = 0; i < NumCol; i++)
+    for (size_t i = 0; i < NumCol; i++)
 	{
 		row_tmp[i] *= Num;
 	}
@@ -690,7 +718,7 @@ Matrix<T>& Matrix<T>::SecondTypeTransForm(int Row, double Num)
 
 
 template<typename T>
-const Matrix<T> Matrix<T>::SecondTypeTransForm(int Row, double Num) const
+const Matrix<T> Matrix<T>::SecondTypeTransForm(size_t Row, double Num) const
 {
 	//第二类初等变换---某一行乘以一个数
 	// Row---待乘数的行
@@ -699,7 +727,7 @@ const Matrix<T> Matrix<T>::SecondTypeTransForm(int Row, double Num) const
 
 	T * row_tmp = tmpMat.p1[Row];
 
-	for (int i = 0; i < NumCol; i++)
+    for (size_t i = 0; i < NumCol; i++)
 	{
 		row_tmp[i] *= Num;
 	}
@@ -710,7 +738,7 @@ const Matrix<T> Matrix<T>::SecondTypeTransForm(int Row, double Num) const
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double Num)
+Matrix<T>& Matrix<T>::ThirdTypeTransForm(size_t Row_One, size_t Row_Two, double Num)
 {
 	//第三类变换----某一行的倍数加到另一行
 	//Row_One ----- 需要乘数字的一行
@@ -721,7 +749,7 @@ Matrix<T>& Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double Num)
 	T *row_one = p1[Row_One];
 	T *row_two = p1[Row_Two];
 
-	for (int i = 0; i < NumCol; i++)
+    for (size_t i = 0; i < NumCol; i++)
 	{
 		row_two[i] += row_one[i] * Num;
 	}
@@ -730,7 +758,7 @@ Matrix<T>& Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double Num)
 
 
 template<typename T>
-const Matrix<T> Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double Num) const
+const Matrix<T> Matrix<T>::ThirdTypeTransForm(size_t Row_One, size_t Row_Two, double Num) const
 {
 	//第三类变换----某一行的倍数加到另一行
 	//Row_One ----- 需要乘数字的一行
@@ -742,33 +770,15 @@ const Matrix<T> Matrix<T>::ThirdTypeTransForm(int Row_One, int Row_Two, double N
 	T *row_one = tmpMat.p1[Row_One];
 	T *row_two = tmpMat.p1[Row_Two];
 
-	for (int i = 0; i < NumCol; i++)
+    for (size_t i = 0; i < NumCol; i++)
 	{
 		row_two[i] += row_one[i] * Num;
 	}
 	return tmpMat;
 }
 
-
 template<typename T>
-ostream& operator<<(ostream& os,const Matrix<T>& mat)
-{
-	int Row = mat.GetNumRow();
-	int Col = mat.GetNumCol();
-
-	for (int i = 0; i < Row; i++)
-	{
-		for (int j = 0; j < Col; j++)
-		{
-			os << mat(i, j) << " ";
-		}
-		os << endl;
-	}
-	return os;
-}
-
-template<typename T>
-void Matrix<T>::Resize(int Row, int Col)
+void Matrix<T>::Resize(size_t Row, size_t Col)
 {
 	if (p1 != NULL)
 	{
@@ -777,36 +787,69 @@ void Matrix<T>::Resize(int Row, int Col)
 	Allocate(Row, Col);
 }
 
-//template<typename T>
-//Matrix<T>& Matrix<T>::TransPose()
-//{
-//	T tmp;
-//	for (int i = 0; i < NumRow; i++)
-//	{
-//		for (int j = i; j < NumCol; j++)
-//		{
-//			tmp = p1[i][j];
-//			p1[i][j] = p1[j][i];
-//			p1[j][i] = tmp;
-//		}
-//	}
-//	return *this;
-//}
-
 template<typename T>
 const Matrix<T> Matrix<T>::TransPose() const
 {
 	Matrix<T> mat(NumCol,NumRow);
 	T tmp;
-	for (int i = 0; i < NumRow; i++)
+    for (size_t i = 0; i < NumRow; i++)
 	{
-		for (int j = 0; j < NumCol; j++)
+        for (size_t j = 0; j < NumCol; j++)
 		{
 			mat.p1[j][i] = p1[i][j];
 		}
 	}
 	return mat;
 }
+
+//template<typename T>
+//void Matrix<T>::BuildPETSCMat()
+//{
+//    PetscErrorCode ierr;
+//    PetscScalar *a;
+//    PetscBool bflag;
+
+//    ierr = PetscInitialized(&bflag);
+//    if(ierr)
+//    {
+//        throw runtime_error("Check Petsc Initialized Failed");
+//    }
+
+//    if(bflag == false)
+//    {
+//        throw runtime_error("Petsc didn't initialize");
+//    }
+
+
+//    ierr = MatDestroy(& PetMat);
+
+
+//    PetscInt RowNum = static_cast<PetscInt>(GetNumRow());
+//    PetscInt ColNum = static_cast<PetscInt>(GetNumCol());
+
+//    PetscInt Num = static_cast<PetscInt>(GetNumData());
+//    ierr = PetscMalloc1((PetscInt)Num,&a);CHKERRQ(ierr);
+
+
+//    //充填a
+//    for(PetscInt i = 0; i < RowNum;i++)
+//    {
+//        for(PetscInt j = 0 ; j <ColNum;j++)
+//        {
+//            a[i+j*ColNum] = p1[i][j];
+//        }
+//    }
+
+//    ierr = MatCreate(MPI_COMM_SELF,&PetMat);CHKERRQ(ierr);
+//    ierr = MatSetSizes(PetMat,RowNum,ColNum,RowNum,ColNum);CHKERRQ(ierr);
+//    ierr = MatSetType(PetMat,MATSEQDENSE);CHKERRQ(ierr);   //稠密矩阵
+//    ierr = MatSeqDenseSetPreallocation(PetMat,a);CHKERRQ(ierr);
+//    ierr = MatAssemblyBegin(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+//    ierr = MatAssemblyEnd(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+//    ierr = PetscFree(a);CHKERRQ(ierr);
+
+//}
 
 
 
