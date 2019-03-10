@@ -30,12 +30,12 @@ public:
     const Vector<T> operator-(const Vector<T>& vec) const;
     const Vector<T> operator-(const T& n) const;
     const Vector<T> operator-() const;
-
-    const T operator*(const Vector<T>& vec) const;
     const Vector<T> operator*(const T& n)const;
 
     T& operator()(size_t i);
     const T operator()(size_t i) const;
+
+    const T dot(const Vector<T>& vec) const;
 
     friend ostream& operator<<(ostream& os,const Vector<T>& vec)
     {
@@ -227,7 +227,7 @@ const Vector<T> Vector<T>::operator*(const T& n)const
     return RC;
 }
 template<typename T>
-const T Vector<T>::operator*(const Vector<T>& vec) const
+const T Vector<T>::dot(const Vector<T>& vec) const
 {
     T RC = (T)0;
 

@@ -35,21 +35,27 @@ public:
      **********/
 
     const Matrix<T> operator +(const Matrix<T>& mat) const; //矩阵加矩阵
-    const Matrix<T> operator +(const T num) const; //矩阵加标量
+    const Matrix<T> operator +(const T& num) const; //矩阵加标量
     const Matrix<T> operator -(const Matrix<T>& mat) const;
-    const Matrix<T> operator -(const T num) const;
+    const Matrix<T> operator -(const T& num) const;
 	const Matrix<T> operator -() const;
     const Matrix<T> operator *(const Matrix<T>& mat) const;
     const Vector<T> operator *(const Vector<T>& vec) const;
-    const Matrix<T> operator *(const T num) const;
+    const Matrix<T> operator *(const T& num) const;
+    friend const Matrix<T> operator *(const T& num,const Matrix<T>& mat)
+    {
+        return mat*num;
+    }
+
+
 
     Matrix<T>& operator +=(const Matrix<T>& mat);
-    Matrix<T>& operator +=(const T num);
+    Matrix<T>& operator +=(const T& num);
     Matrix<T>& operator -=(const Matrix<T>& mat);
-    Matrix<T>& operator -=(const T num);
+    Matrix<T>& operator -=(const T& num);
 	Matrix<T>& operator *=(const Matrix<T>& mat);      //mat必须是方阵
-    Matrix<T>& operator *=(const T num);
-	Matrix<T>& operator /= (const T num);
+    Matrix<T>& operator *=(const T& num);
+	Matrix<T>& operator /= (const T& num);
 
     T& operator ()(size_t index_row,size_t index_col);//将函数操作符重载，实现寻址操作符功能
     const T operator()(size_t index_row,size_t index_col) const;//供常对象使用
@@ -134,7 +140,7 @@ private:
 
 
 private:
-    void Allocate(size_t Num_Row,size_t Num_Col);
+    void Allocate(size_t NumRow,size_t NumCol);
 	void DeAllocate();
 
 	void Swap(Matrix<T>& mat);
@@ -214,12 +220,12 @@ Matrix<T>::Matrix() :NumRow(0), NumCol(0), Size(0), p1(nullptr)
     
 }
 
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(size_t Row, size_t Col) :NumRow(Row), NumCol(Col)
 {
     Allocate(NumRow,NumCol);
 }
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(const Matrix& mat) : NumRow(mat.NumRow), NumCol(mat.NumCol)
 {
     Allocate(NumRow,NumCol);
@@ -254,7 +260,7 @@ Matrix<T>& Matrix<T>::operator =(const Matrix<T>& mat)
     return *this;
 }
 
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(size_t Row, size_t Col, T** arr):NumRow(Row),NumCol(Col)
 {
 
@@ -270,7 +276,7 @@ Matrix<T>::Matrix(size_t Row, size_t Col, T** arr):NumRow(Row),NumCol(Col)
 
 }
 
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(size_t Row,size_t Col,T * arr,const string& Storage)
     :NumRow(Row),NumCol(Col)
 {
@@ -341,7 +347,7 @@ const Matrix<T> Matrix<T>::operator +(const Matrix<T>& mat) const
 }
 
 template<typename T>
-const Matrix<T> Matrix<T>::operator +(const T num) const
+const Matrix<T> Matrix<T>::operator +(const T& num) const
 {
     //向量与标量做加法
     Matrix<T> res_mat(NumRow,NumCol);
@@ -376,7 +382,7 @@ const Matrix<T> Matrix<T>::operator -(const Matrix<T>& mat) const
 }
 
 template<typename T>
-const Matrix<T> Matrix<T>::operator -(const T num) const
+const Matrix<T> Matrix<T>::operator -(const T& num) const
 {
     //向量与标量做加法
     Matrix<T> res_mat(NumRow,NumCol);
@@ -430,7 +436,7 @@ const Matrix<T> Matrix<T>::operator *(const Matrix<T>& mat) const
 }
 
 template<typename T>
-const Matrix<T> Matrix<T>::operator *(const T num) const
+const Matrix<T> Matrix<T>::operator *(const T& num) const
 {
     Matrix<T> res_mat(NumRow,NumCol);
     for(size_t i = 0;i < NumRow;++i)
@@ -487,7 +493,7 @@ Matrix<T>& Matrix<T>::operator +=(const Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator +=(const T num)
+Matrix<T>& Matrix<T>::operator +=(const T& num)
 {
     for(size_t i = 0;i < NumRow;++i)
     {
@@ -518,7 +524,7 @@ Matrix<T>& Matrix<T>::operator -=(const Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator -=(const T num)
+Matrix<T>& Matrix<T>::operator -=(const T& num)
 {
     for(size_t i = 0;i < NumRow;++i)
     {
@@ -540,7 +546,7 @@ Matrix<T>& Matrix<T>::operator *=(const Matrix<T>& mat)
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator *=(const T num)
+Matrix<T>& Matrix<T>::operator *=(const T& num)
 {
     for(size_t i = 0;i < NumRow;++i)
     {
@@ -553,7 +559,7 @@ Matrix<T>& Matrix<T>::operator *=(const T num)
 }
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator /= (const T num)
+Matrix<T>& Matrix<T>::operator /= (const T& num)
 {
     for (size_t i = 0; i < NumRow; ++i)
 	{

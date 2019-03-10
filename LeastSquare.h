@@ -7,6 +7,7 @@
 
 #include "Matrix.h"
 #include "Vector.h"
+#include "Cholesky.h"
 
 
 template <typename T>
@@ -45,7 +46,8 @@ const Vector<T> LeastSquare<T>::Solve_Regularized()
     LeftMat = A.TransPose() * A;
     RightVec = A.TransPose() * b;
 
-
+    Cholesky<T> chol(LeftMat);
+    Matrix<T> L = chol.LDeCompose();
 
 }
 

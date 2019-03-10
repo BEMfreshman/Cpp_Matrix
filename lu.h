@@ -39,12 +39,12 @@ private:
 	Matrix<T> A;
 
 private:
-	const Matrix<T> ProducePorQMatrix(int p, int q);
+	const Matrix<T> ProducePorQMatrix(size_t p, size_t q);
 	//交换第p行（列）和第q行（列）
 	//理论参见 P21
 
-	int ithGaussFact(int i);
-	int ithGaussFact(int i, Matrix<T>& Li);
+	int ithGaussFact(size_t i);
+	int ithGaussFact(size_t i, Matrix<T>& Li);
 	//选取第i行第i列作为主元进行高斯消去
 
 
@@ -71,7 +71,7 @@ LU<T>::~LU()
 }
 
 template<typename T>
-const Matrix<T> LU<T>::ProducePorQMatrix(int p, int q)
+const Matrix<T> LU<T>::ProducePorQMatrix(size_t p, size_t q)
 {
 	Matrix<T> mat(A.GetNumRow(), A.GetNumCol());
 	mat.IdentityMatrix();     //单位矩阵
@@ -92,9 +92,9 @@ const Matrix<T> LU<T>::ProducePorQMatrix(int p, int q)
 }
 
 template<typename T>
-int LU<T>::ithGaussFact(int i)
+int LU<T>::ithGaussFact(size_t i)
 {
-	int row = A.GetNumRow();
+	size_t row = A.GetNumRow();
 
 	Matrix<T> matColBelowPivot(row - i - 1, 1);
 	Matrix<T> matRowRightPivot(1, row - i - 1);
@@ -123,9 +123,9 @@ int LU<T>::ithGaussFact(int i)
 }
 
 template<typename T>
-int LU<T>::ithGaussFact(int i,Matrix<T>& InvLi)
+int LU<T>::ithGaussFact(size_t i,Matrix<T>& InvLi)
 {
-	int row = A.GetNumRow();
+	size_t row = A.GetNumRow();
 
 	InvLi.Resize(A.GetNumRow(), A.GetNumCol());
 	InvLi.IdentityMatrix();
@@ -179,16 +179,16 @@ vector<Matrix<T>> LU<T>::LUDeCompose()
     std::vector<int> ColReturn;
     std::vector<double> NumReturn;
 
-    int RowNum = A.GetNumRow();
-    int ColNum = A.GetNumCol();
+    size_t RowNum = A.GetNumRow();
+    size_t ColNum = A.GetNumCol();
 
     Matrix<T> U(RowNum, ColNum);
     Matrix<T> L(RowNum, ColNum);
     //当主元为0时会失败
     //理论《数值线性代数》 P18
 
-    int row = A.GetNumRow();
-    int col = A.GetNumCol();
+    size_t row = A.GetNumRow();
+    size_t col = A.GetNumCol();
 
     L.Resize(row, col);
     U.Resize(row, col);
@@ -196,7 +196,7 @@ vector<Matrix<T>> LU<T>::LUDeCompose()
     U.SetZeros();
 
 
-    for (int i = 0; i < row - 1; i++)
+    for (size_t i = 0; i < row - 1; i++)
     {
         int reFlag = ithGaussFact(i);
         if (reFlag == 0)
@@ -240,8 +240,8 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
     //对A矩阵的分解结果为
     //PAQ = LU
 
-    int row = A.GetNumRow();
-    int col = A.GetNumCol();
+    size_t row = A.GetNumRow();
+    size_t col = A.GetNumCol();
 
     Matrix<T> P(row, col);
     P.SetZeros();
@@ -260,7 +260,7 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
     T Pivot;
     int PivotRow;
     int PivotCol;
-    for (int i = 0; i < row - 1; i++)
+    for (size_t i = 0; i < row - 1; i++)
     {
         Matrix<T> PEach;
         Matrix<T> QEach;
@@ -314,7 +314,7 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
         }
     }
 
-    for (int i = PVec.size() - 1; i >= 0; i--)
+    for (size_t i = PVec.size() - 1; i >= 0; i--)
     {
         if (i == PVec.size() - 1)
         {
@@ -327,9 +327,9 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
     }
 
 
-    for (int i = 0; i < row; i++)
+    for (size_t i = 0; i < row; i++)
     {
-        for (int j = 0; j < col; j++)
+        for (size_t j = 0; j < col; j++)
         {
             if (i > j)
             {
@@ -361,8 +361,8 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
     //对A矩阵的分解结果为
     //PA = LU
 
-    int row = A.GetNumRow();
-    int col = A.GetNumCol();
+    size_t row = A.GetNumRow();
+    size_t col = A.GetNumCol();
 
 
     Matrix<T> P(row, col);
@@ -376,9 +376,9 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
     vector<Matrix<T>> PVec;
 
     T Pivot;
-    int PivotRow;
-    int PivotCol;
-    for (int i = 0; i < row - 1; i++)
+    size_t PivotRow;
+    size_t PivotCol;
+    for (size_t i = 0; i < row - 1; i++)
     {
         Matrix<T> PEach;
         Matrix<T> InvLiEach;
@@ -412,7 +412,7 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
 
     }
 
-    for (int i = PVec.size() - 1; i >= 0; i--)
+    for (size_t i = PVec.size() - 1; i >= 0; i--)
     {
         if (i == PVec.size() - 1)
         {
@@ -454,8 +454,8 @@ template <typename T>
 int LU<T>::Det(T *Val)
 {
 	//求解行列式
-	int RowNum = A.GetNumRow();
-	int ColNum = A.GetNumCol();
+	size_t RowNum = A.GetNumRow();
+	size_t ColNum = A.GetNumCol();
 
 	if (RowNum != ColNum)
 	{
