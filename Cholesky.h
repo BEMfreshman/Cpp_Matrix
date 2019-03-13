@@ -11,7 +11,7 @@ template<typename T>
 class Cholesky
 {
 public:
-	Cholesky(const Matrix<T>& A);
+    explicit Cholesky(const Matrix<T>& A);
 	~Cholesky();
 
     Matrix<T> LDeCompose();               //A = L * L';
@@ -40,7 +40,7 @@ template<typename T>
 Matrix<T> Cholesky<T>::LDeCompose()
 {
 	//A = L * L';
-	int row = A.GetNumRow();
+	size_t row = A.GetNumRow();
 
 	Matrix<T> matColBelowPivot;
 	Matrix<T> matRowLeftPivot;

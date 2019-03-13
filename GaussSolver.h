@@ -13,11 +13,12 @@ class GaussSolver
 public:
 	GaussSolver(const Matrix<T>& A, const Matrix<T>& b);
 
-	int FullPivotSolve();          //ȫѡ��Ԫ��ȥ
-	int ColPivotSolve();           //����Ԫ��ȥ
+	int FullPivotSolve();          //全选主元消去
+	int ColPivotSolve();           //列主元消去
 
 
 	int LowtriSolve();
+	int UptriSolve();
 
 
 	const Matrix<T> getAns() const;
@@ -43,8 +44,10 @@ GaussSolver<T>::GaussSolver(const Matrix<T>& A, const Matrix<T>& b)
 template<typename T>
 int GaussSolver<T>::LowtriSolve()
 {
-	//���������ξ���
-	//����ǰ����
+	//解下三角形矩阵
+	//采用前带法
+
+	//理论参见 《数值线性代数》 第二版 P12
 
     size_t row = A.GetNumRow();
 
@@ -69,6 +72,37 @@ int GaussSolver<T>::LowtriSolve()
 
 }
 
+template <typename T>
+int GaussSolver<T>::UptriSolve()
+{
+    //解上三角矩阵
+    //采用回代法
+
+    //理论参见 《数值线性代数》 第二版 P13
+
+    ans.Resize(b.GetNumRow(),1);
+
+
+    for(size_t i = A.GetNumRow() - 1; i >= 1; i--)
+    {
+        Matrix<T> bn(i,1);
+        Matrix<T> An(i,1);
+
+        bn = b.ExtractBlock(0,0,bn.GetNumRow(),bn.GetNumCol());
+        An = A.ExtractBlock(0,i,An.GetNumRow(),An.GetNumCol());
+
+
+        ans(i,0) = b(i,0) / A(i,i);
+        bn -= An * ans(i,0);
+
+        b.SetBlock(0,0,bn.GetNumRow(),bn.GetNumCol(),bn);
+    }
+
+    ans(0,0) = b(0,0) / A(0,0);
+    return EXIT_SUCCESS;
+
+}
+
 template<typename T>
 const Matrix<T> GaussSolver<T>::getAns() const
 {
@@ -76,7 +110,7 @@ const Matrix<T> GaussSolver<T>::getAns() const
 }
 
 template<typename T>
-int GaussSolver<T>::FullPivotSolve()          //ȫѡ��Ԫ��ȥ
+int GaussSolver<T>::FullPivotSolve()          //全选主元消去
 {
 
 
@@ -84,7 +118,7 @@ int GaussSolver<T>::FullPivotSolve()          //ȫѡ��Ԫ��ȥ
 }
 
 template<typename T>
-int GaussSolver<T>::ColPivotSolve()           //����Ԫ��ȥ
+int GaussSolver<T>::ColPivotSolve()           //列主元消去
 {
 
 

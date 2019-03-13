@@ -1,11 +1,15 @@
 ﻿#ifndef MATRIX_H_
 #define MATRIX_H_
 
-#include <petscmat.h>
+//#include <petscmat.h>
 
 #include <iostream>
 #include <assert.h>
 #include <cmath>
+#include <vector>
+#include <algorithm>
+
+#include "Vector.h"
 
 #define EPS 1e-10
 
@@ -31,20 +35,27 @@ public:
      **********/
 
     const Matrix<T> operator +(const Matrix<T>& mat) const; //矩阵加矩阵
-    const Matrix<T> operator +(const T num) const; //矩阵加标量
+    const Matrix<T> operator +(const T& num) const; //矩阵加标量
     const Matrix<T> operator -(const Matrix<T>& mat) const;
-    const Matrix<T> operator -(const T num) const;
+    const Matrix<T> operator -(const T& num) const;
 	const Matrix<T> operator -() const;
     const Matrix<T> operator *(const Matrix<T>& mat) const;
-    const Matrix<T> operator *(const T num) const;
+    const Vector<T> operator *(const Vector<T>& vec) const;
+    const Matrix<T> operator *(const T& num) const;
+    friend const Matrix<T> operator *(const T& num,const Matrix<T>& mat)
+    {
+        return mat*num;
+    }
+
+
 
     Matrix<T>& operator +=(const Matrix<T>& mat);
-    Matrix<T>& operator +=(const T num);
+    Matrix<T>& operator +=(const T& num);
     Matrix<T>& operator -=(const Matrix<T>& mat);
-    Matrix<T>& operator -=(const T num);
+    Matrix<T>& operator -=(const T& num);
 	Matrix<T>& operator *=(const Matrix<T>& mat);      //mat必须是方阵
-    Matrix<T>& operator *=(const T num);
-	Matrix<T>& operator /= (const T num);
+    Matrix<T>& operator *=(const T& num);
+	Matrix<T>& operator /= (const T& num);
 
     T& operator ()(size_t index_row,size_t index_col);//将函数操作符重载，实现寻址操作符功能
     const T operator()(size_t index_row,size_t index_col) const;//供常对象使用
@@ -105,6 +116,10 @@ public:
 		
 
 
+    double norm_1() const;
+    double norm_2() const;
+    double norm_Inf() const;
+
     inline size_t GetNumRow();
     inline size_t GetNumRow() const;
     inline size_t GetNumCol();
@@ -125,7 +140,7 @@ private:
 
 
 private:
-    void Allocate(size_t Num_Row,size_t Num_Col);
+    void Allocate(size_t NumRow,size_t NumCol);
 	void DeAllocate();
 
 	void Swap(Matrix<T>& mat);
@@ -150,11 +165,11 @@ void Matrix<T>::Allocate(size_t NumRow,size_t NumCol)
     {
         Size = NumRow * NumCol;
         p1 = new T* [NumRow];
-        assert(p1 != NULL);
+        assert(p1 != nullptr);
         for (size_t i = 0; i < NumRow; ++i)
         {
             p1[i] = new T[NumCol]; // 指向二维数组每行的开头位置
-            assert(p1[i] != NULL);
+            assert(p1[i] != nullptr);
         }
 		this->NumRow = NumRow;
 		this->NumCol = NumCol;
@@ -170,10 +185,10 @@ void Matrix<T>::DeAllocate()
     for(size_t i = 0;i < NumRow;++i)
     {
         delete [] p1[i];
-        p1[i] = NULL;
+        p1[i] = nullptr;
     }
     delete [] p1;
-    p1 = NULL;
+    p1 = nullptr;
     NumRow = 0;
     NumCol = 0;
     Size = 0;
@@ -200,17 +215,17 @@ void Matrix<T>::Swap(Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T>::Matrix() :NumRow(0), NumCol(0), Size(0), p1(NULL)
+Matrix<T>::Matrix() :NumRow(0), NumCol(0), Size(0), p1(nullptr)
 {
     
 }
 
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(size_t Row, size_t Col) :NumRow(Row), NumCol(Col)
 {
     Allocate(NumRow,NumCol);
 }
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(const Matrix& mat) : NumRow(mat.NumRow), NumCol(mat.NumCol)
 {
     Allocate(NumRow,NumCol);
@@ -245,7 +260,7 @@ Matrix<T>& Matrix<T>::operator =(const Matrix<T>& mat)
     return *this;
 }
 
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(size_t Row, size_t Col, T** arr):NumRow(Row),NumCol(Col)
 {
 
@@ -261,7 +276,7 @@ Matrix<T>::Matrix(size_t Row, size_t Col, T** arr):NumRow(Row),NumCol(Col)
 
 }
 
-template<typename T>
+template <typename T>
 Matrix<T>::Matrix(size_t Row,size_t Col,T * arr,const string& Storage)
     :NumRow(Row),NumCol(Col)
 {
@@ -332,7 +347,7 @@ const Matrix<T> Matrix<T>::operator +(const Matrix<T>& mat) const
 }
 
 template<typename T>
-const Matrix<T> Matrix<T>::operator +(const T num) const
+const Matrix<T> Matrix<T>::operator +(const T& num) const
 {
     //向量与标量做加法
     Matrix<T> res_mat(NumRow,NumCol);
@@ -367,7 +382,7 @@ const Matrix<T> Matrix<T>::operator -(const Matrix<T>& mat) const
 }
 
 template<typename T>
-const Matrix<T> Matrix<T>::operator -(const T num) const
+const Matrix<T> Matrix<T>::operator -(const T& num) const
 {
     //向量与标量做加法
     Matrix<T> res_mat(NumRow,NumCol);
@@ -421,7 +436,7 @@ const Matrix<T> Matrix<T>::operator *(const Matrix<T>& mat) const
 }
 
 template<typename T>
-const Matrix<T> Matrix<T>::operator *(const T num) const
+const Matrix<T> Matrix<T>::operator *(const T& num) const
 {
     Matrix<T> res_mat(NumRow,NumCol);
     for(size_t i = 0;i < NumRow;++i)
@@ -432,6 +447,31 @@ const Matrix<T> Matrix<T>::operator *(const T num) const
         }
     }
     return res_mat;
+}
+
+template <typename T>
+const Vector<T> Matrix<T>::operator *(const Vector<T>& vec) const
+{
+    Vector<T> RC(NumRow);
+
+    if(NumCol != vec.getNum())
+    {
+        throw runtime_error("dimension is not equal");
+    }
+
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        Vector<T> RowVec(NumCol);
+        for(size_t j = 0 ; j < NumCol;j++)
+        {
+            RowVec.newValue(j,p1[i][j]);
+        }
+
+        T res = RowVec * vec;
+        RC.newValue(i,res);
+    }
+
+    return RC;
 }
 
 template<typename T>
@@ -453,7 +493,7 @@ Matrix<T>& Matrix<T>::operator +=(const Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator +=(const T num)
+Matrix<T>& Matrix<T>::operator +=(const T& num)
 {
     for(size_t i = 0;i < NumRow;++i)
     {
@@ -484,7 +524,7 @@ Matrix<T>& Matrix<T>::operator -=(const Matrix<T>& mat)
 }
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator -=(const T num)
+Matrix<T>& Matrix<T>::operator -=(const T& num)
 {
     for(size_t i = 0;i < NumRow;++i)
     {
@@ -506,7 +546,7 @@ Matrix<T>& Matrix<T>::operator *=(const Matrix<T>& mat)
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator *=(const T num)
+Matrix<T>& Matrix<T>::operator *=(const T& num)
 {
     for(size_t i = 0;i < NumRow;++i)
     {
@@ -519,7 +559,7 @@ Matrix<T>& Matrix<T>::operator *=(const T num)
 }
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator /= (const T num)
+Matrix<T>& Matrix<T>::operator /= (const T& num)
 {
     for (size_t i = 0; i < NumRow; ++i)
 	{
@@ -674,7 +714,7 @@ Matrix<T>& Matrix<T>::FirstTypeTransForm(size_t Row_One, size_t Row_Two)
 {
 	//交换两行
 
-	T * row_tmp = NULL;
+	T * row_tmp = nullptr;
 	row_tmp = p1[Row_One];
 	p1[Row_One] = p1[Row_Two];
 	p1[Row_Two] = row_tmp;
@@ -690,7 +730,7 @@ const Matrix<T> Matrix<T>::FirstTypeTransForm(size_t Row_One, size_t Row_Two) co
 
 	Matrix<T> tmpMat = *this;
 
-	T * row_tmp = NULL;
+	T * row_tmp = nullptr;
 	row_tmp = tmpMat.p1[Row_One];
 	tmpMat.p1[Row_One] = tmpMat.p1[Row_Two];
 	tmpMat.p1[Row_Two] = row_tmp;
@@ -780,7 +820,7 @@ const Matrix<T> Matrix<T>::ThirdTypeTransForm(size_t Row_One, size_t Row_Two, do
 template<typename T>
 void Matrix<T>::Resize(size_t Row, size_t Col)
 {
-	if (p1 != NULL)
+	if (p1 != nullptr)
 	{
 		DeAllocate();
 	}
@@ -802,54 +842,51 @@ const Matrix<T> Matrix<T>::TransPose() const
 	return mat;
 }
 
-//template<typename T>
-//void Matrix<T>::BuildPETSCMat()
-//{
-//    PetscErrorCode ierr;
-//    PetscScalar *a;
-//    PetscBool bflag;
+template <typename T>
+double Matrix<T>::norm_1() const
+{
+    vector<T> SUMCol;
 
-//    ierr = PetscInitialized(&bflag);
-//    if(ierr)
-//    {
-//        throw runtime_error("Check Petsc Initialized Failed");
-//    }
+    for(size_t i = 0 ; i < NumCol;i++)
+    {
+        double SUM = 0.0;
 
-//    if(bflag == false)
-//    {
-//        throw runtime_error("Petsc didn't initialize");
-//    }
+        for(size_t j = 0 ; j < NumRow;j++)
+        {
+            SUM += p1[j][i];
+        }
 
+        SUMCol.push_back(SUM);
+    }
 
-//    ierr = MatDestroy(& PetMat);
+    return max_element(SUMCol.begin(),SUMCol.end());
+}
 
+template<typename T>
+double Matrix<T>::norm_2() const
+{
 
-//    PetscInt RowNum = static_cast<PetscInt>(GetNumRow());
-//    PetscInt ColNum = static_cast<PetscInt>(GetNumCol());
+}
 
-//    PetscInt Num = static_cast<PetscInt>(GetNumData());
-//    ierr = PetscMalloc1((PetscInt)Num,&a);CHKERRQ(ierr);
+template<typename T>
+double Matrix<T>::norm_Inf() const
+{
+    vector<T> SUMRow;
 
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        double SUM = 0.0;
 
-//    //充填a
-//    for(PetscInt i = 0; i < RowNum;i++)
-//    {
-//        for(PetscInt j = 0 ; j <ColNum;j++)
-//        {
-//            a[i+j*ColNum] = p1[i][j];
-//        }
-//    }
+        for(size_t j = 0 ; j < NumCol;j++)
+        {
+            SUM += p1[i][j];
+        }
 
-//    ierr = MatCreate(MPI_COMM_SELF,&PetMat);CHKERRQ(ierr);
-//    ierr = MatSetSizes(PetMat,RowNum,ColNum,RowNum,ColNum);CHKERRQ(ierr);
-//    ierr = MatSetType(PetMat,MATSEQDENSE);CHKERRQ(ierr);   //稠密矩阵
-//    ierr = MatSeqDenseSetPreallocation(PetMat,a);CHKERRQ(ierr);
-//    ierr = MatAssemblyBegin(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-//    ierr = MatAssemblyEnd(PetMat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+        SUMRow.push_back(SUM);
+    }
 
-//    ierr = PetscFree(a);CHKERRQ(ierr);
-
-//}
+    return max_element(SUMRow.begin(),SUMRow.end());
+}
 
 
 

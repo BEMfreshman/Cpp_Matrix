@@ -18,7 +18,7 @@ public:
 
 	~LU();
 
-	int Det(T* Val);      //¼ÆËãAµÄĞĞÁĞÊ½Öµ
+	int Det(T* Val);      //è®¡ç®—Açš„è¡Œåˆ—å¼å€¼
 
 //	int GetL(Matrix<T>& L) const;
 //	int GetU(Matrix<T>& U) const;
@@ -39,13 +39,13 @@ private:
 	Matrix<T> A;
 
 private:
-	const Matrix<T> ProducePorQMatrix(int p, int q);
-	//½»»»µÚpĞĞ£¨ÁĞ£©ºÍµÚqĞĞ£¨ÁĞ£©
-	//ÀíÂÛ²Î¼û P21
+	const Matrix<T> ProducePorQMatrix(size_t p, size_t q);
+	//äº¤æ¢ç¬¬pè¡Œï¼ˆåˆ—ï¼‰å’Œç¬¬qè¡Œï¼ˆåˆ—ï¼‰
+	//ç†è®ºå‚è§ P21
 
-	int ithGaussFact(int i);
-	int ithGaussFact(int i, Matrix<T>& Li);
-	//Ñ¡È¡µÚiĞĞµÚiÁĞ×÷ÎªÖ÷Ôª½øĞĞ¸ßË¹ÏûÈ¥
+	int ithGaussFact(size_t i);
+	int ithGaussFact(size_t i, Matrix<T>& Li);
+	//é€‰å–ç¬¬iè¡Œç¬¬iåˆ—ä½œä¸ºä¸»å…ƒè¿›è¡Œé«˜æ–¯æ¶ˆå»
 
 
 };
@@ -71,12 +71,12 @@ LU<T>::~LU()
 }
 
 template<typename T>
-const Matrix<T> LU<T>::ProducePorQMatrix(int p, int q)
+const Matrix<T> LU<T>::ProducePorQMatrix(size_t p, size_t q)
 {
 	Matrix<T> mat(A.GetNumRow(), A.GetNumCol());
-	mat.IdentityMatrix();     //µ¥Î»¾ØÕó
+	mat.IdentityMatrix();     //å•ä½çŸ©é˜µ
 
-	//½»»»matµÄµÚpÁĞºÍµÚqÁĞ
+	//äº¤æ¢matçš„ç¬¬påˆ—å’Œç¬¬qåˆ—
 
 	Matrix<T> pmat(A.GetNumRow(), 1);
 	Matrix<T> qmat(A.GetNumRow(), 1);
@@ -92,9 +92,9 @@ const Matrix<T> LU<T>::ProducePorQMatrix(int p, int q)
 }
 
 template<typename T>
-int LU<T>::ithGaussFact(int i)
+int LU<T>::ithGaussFact(size_t i)
 {
-	int row = A.GetNumRow();
+	size_t row = A.GetNumRow();
 
 	Matrix<T> matColBelowPivot(row - i - 1, 1);
 	Matrix<T> matRowRightPivot(1, row - i - 1);
@@ -103,7 +103,7 @@ int LU<T>::ithGaussFact(int i)
 	double pivot = A(i, i);
 	if (abs(pivot) < sqrt(EPS))
 	{
-		//Ö÷ÔªÎª0
+		//ä¸»å…ƒä¸º0
 		return 0;
 	}
 
@@ -123,9 +123,9 @@ int LU<T>::ithGaussFact(int i)
 }
 
 template<typename T>
-int LU<T>::ithGaussFact(int i,Matrix<T>& InvLi)
+int LU<T>::ithGaussFact(size_t i,Matrix<T>& InvLi)
 {
-	int row = A.GetNumRow();
+	size_t row = A.GetNumRow();
 
 	InvLi.Resize(A.GetNumRow(), A.GetNumCol());
 	InvLi.IdentityMatrix();
@@ -137,7 +137,7 @@ int LU<T>::ithGaussFact(int i,Matrix<T>& InvLi)
 	double pivot = A(i, i);
 	if (abs(pivot) < sqrt(EPS))
 	{
-		//Ö÷ÔªÎª0
+		//ä¸»å…ƒä¸º0
 		return 0;
 	}
 
@@ -151,7 +151,7 @@ int LU<T>::ithGaussFact(int i,Matrix<T>& InvLi)
 	InvLi.SetBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol(), matColBelowPivot);
 	
 	/*
-	Li±¾ÉíÊÇµ¥Î»¾ØÕó¾­¹ı³õµÈĞĞ±ä»»µÃÀ´µÄ¾ØÕó£¬ËùÒÔInvLi£¨¼´ËüµÄÄæ¾ØÕó£©ÎªÆä·Ç¶Ô½ÇÏßÔªËØ½ÔÈ¡¸ºÊı¼´¿É
+	Liæœ¬èº«æ˜¯å•ä½çŸ©é˜µç»è¿‡åˆç­‰è¡Œå˜æ¢å¾—æ¥çš„çŸ©é˜µï¼Œæ‰€ä»¥InvLiï¼ˆå³å®ƒçš„é€†çŸ©é˜µï¼‰ä¸ºå…¶éå¯¹è§’çº¿å…ƒç´ çš†å–è´Ÿæ•°å³å¯
 	
 	Li = [                                InvLi = [
 	        1   0   0                               1    0    0
@@ -179,16 +179,16 @@ vector<Matrix<T>> LU<T>::LUDeCompose()
     std::vector<int> ColReturn;
     std::vector<double> NumReturn;
 
-    int RowNum = A.GetNumRow();
-    int ColNum = A.GetNumCol();
+    size_t RowNum = A.GetNumRow();
+    size_t ColNum = A.GetNumCol();
 
     Matrix<T> U(RowNum, ColNum);
     Matrix<T> L(RowNum, ColNum);
-    //µ±Ö÷ÔªÎª0Ê±»áÊ§°Ü
-    //ÀíÂÛ¡¶ÊıÖµÏßĞÔ´úÊı¡· P18
+    //å½“ä¸»å…ƒä¸º0æ—¶ä¼šå¤±è´¥
+    //ç†è®ºã€Šæ•°å€¼çº¿æ€§ä»£æ•°ã€‹ P18
 
-    int row = A.GetNumRow();
-    int col = A.GetNumCol();
+    size_t row = A.GetNumRow();
+    size_t col = A.GetNumCol();
 
     L.Resize(row, col);
     U.Resize(row, col);
@@ -196,7 +196,7 @@ vector<Matrix<T>> LU<T>::LUDeCompose()
     U.SetZeros();
 
 
-    for (int i = 0; i < row - 1; i++)
+    for (size_t i = 0; i < row - 1; i++)
     {
         int reFlag = ithGaussFact(i);
         if (reFlag == 0)
@@ -235,13 +235,13 @@ template <typename T>
 vector<Matrix<T>> LU<T>::PQLUDeCompose()
 {
 
-    //È«Ñ¡Ö÷ÔªÈı½Ç·Ö½â
-    //¾ßÌåÀíÂÛ²Î¼û¡¶ÊıÖµÏßĞÔ´úÊı¡· P21¡ª¡ªP25
-    //¶ÔA¾ØÕóµÄ·Ö½â½á¹ûÎª
+    //å…¨é€‰ä¸»å…ƒä¸‰è§’åˆ†è§£
+    //å…·ä½“ç†è®ºå‚è§ã€Šæ•°å€¼çº¿æ€§ä»£æ•°ã€‹ P21â€•â€•P25
+    //å¯¹AçŸ©é˜µçš„åˆ†è§£ç»“æœä¸º
     //PAQ = LU
 
-    int row = A.GetNumRow();
-    int col = A.GetNumCol();
+    size_t row = A.GetNumRow();
+    size_t col = A.GetNumCol();
 
     Matrix<T> P(row, col);
     P.SetZeros();
@@ -260,7 +260,7 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
     T Pivot;
     int PivotRow;
     int PivotCol;
-    for (int i = 0; i < row - 1; i++)
+    for (size_t i = 0; i < row - 1; i++)
     {
         Matrix<T> PEach;
         Matrix<T> QEach;
@@ -269,7 +269,7 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
 
         if (abs(Pivot) < sqrt(EPS))
         {
-            printf("¾ØÕóÆæÒì");
+            printf("çŸ©é˜µå¥‡å¼‚");
             return 0;
         }
 
@@ -314,7 +314,7 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
         }
     }
 
-    for (int i = PVec.size() - 1; i >= 0; i--)
+    for (size_t i = PVec.size() - 1; i >= 0; i--)
     {
         if (i == PVec.size() - 1)
         {
@@ -327,9 +327,9 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
     }
 
 
-    for (int i = 0; i < row; i++)
+    for (size_t i = 0; i < row; i++)
     {
-        for (int j = 0; j < col; j++)
+        for (size_t j = 0; j < col; j++)
         {
             if (i > j)
             {
@@ -356,13 +356,13 @@ template <typename T>
 vector<Matrix<T>> LU<T>::PLUDeCompose()
 {
 
-    //ÁĞÖ÷ÔªÈı½Ç·Ö½â
-    //¾ßÌåÀíÂÛ²Î¼û¡¶ÊıÖµÏßĞÔ´úÊı¡· P26
-    //¶ÔA¾ØÕóµÄ·Ö½â½á¹ûÎª
+    //åˆ—ä¸»å…ƒä¸‰è§’åˆ†è§£
+    //å…·ä½“ç†è®ºå‚è§ã€Šæ•°å€¼çº¿æ€§ä»£æ•°ã€‹ P26
+    //å¯¹AçŸ©é˜µçš„åˆ†è§£ç»“æœä¸º
     //PA = LU
 
-    int row = A.GetNumRow();
-    int col = A.GetNumCol();
+    size_t row = A.GetNumRow();
+    size_t col = A.GetNumCol();
 
 
     Matrix<T> P(row, col);
@@ -376,9 +376,9 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
     vector<Matrix<T>> PVec;
 
     T Pivot;
-    int PivotRow;
-    int PivotCol;
-    for (int i = 0; i < row - 1; i++)
+    size_t PivotRow;
+    size_t PivotCol;
+    for (size_t i = 0; i < row - 1; i++)
     {
         Matrix<T> PEach;
         Matrix<T> InvLiEach;
@@ -386,7 +386,7 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
 
         if (abs(Pivot) < sqrt(EPS))
         {
-            printf("¾ØÕóÆæÒì");
+            printf("çŸ©é˜µå¥‡å¼‚");
             return 0;
         }
 
@@ -412,7 +412,7 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
 
     }
 
-    for (int i = PVec.size() - 1; i >= 0; i--)
+    for (size_t i = PVec.size() - 1; i >= 0; i--)
     {
         if (i == PVec.size() - 1)
         {
@@ -453,18 +453,18 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
 template <typename T>
 int LU<T>::Det(T *Val)
 {
-	//Çó½âĞĞÁĞÊ½
-	int RowNum = A.GetNumRow();
-	int ColNum = A.GetNumCol();
+	//æ±‚è§£è¡Œåˆ—å¼
+	size_t RowNum = A.GetNumRow();
+	size_t ColNum = A.GetNumCol();
 
 	if (RowNum != ColNum)
 	{
-		cout << "´íÎó£¬·Ç·½Õó£¬²»¿É¼ÆËãĞĞÁĞÊ½" << endl;
+		cout << "é”™è¯¯ï¼Œéæ–¹é˜µï¼Œä¸å¯è®¡ç®—è¡Œåˆ—å¼" << endl;
 		exit(1);
 	}
     else if (RowNum == 1)
 	{
-		//Ö»ÓĞÒ»¸öÔªËØ
+		//åªæœ‰ä¸€ä¸ªå…ƒç´ 
 		(*Val) = A(0, 0);
 		return 1;
 	}
@@ -481,7 +481,7 @@ int LU<T>::Det(T *Val)
 
 	if (FirstTranFormTimes % 2 != 0)
 	{
-		//×öÁËÆæÊı´ÎµÚÒ»Àà±ä»»
+		//åšäº†å¥‡æ•°æ¬¡ç¬¬ä¸€ç±»å˜æ¢
 		(*Val) = -(*Val);
 	}
 

@@ -2,7 +2,6 @@
 #define VECTOR_H
 
 //向量类
-#include "storagetype.h"
 #include <stdlib.h>
 #include <iostream>
 #include <cmath>
@@ -14,7 +13,7 @@ class Vector
 {
 public:
     Vector();
-    Vector(size_t num);
+    explicit Vector(size_t num);
     Vector(const Vector<T >& vec);
     Vector<T >& operator=(const Vector<T >& vec);
 
@@ -27,14 +26,40 @@ public:
      */
 
     const Vector<T> operator+(const Vector<T>& vec) const;
-    const Vector<T> operator+(const T n) const;
+    const Vector<T> operator+(const T& n) const;
     const Vector<T> operator-(const Vector<T>& vec) const;
-    const Vector<T> operator-(const T n) const;
+    const Vector<T> operator-(const T& n) const;
     const Vector<T> operator-() const;
-    const Vector<T> operator*(const T n)const;
+    const Vector<T> operator*(const T& n)const;
 
     T& operator()(size_t i);
     const T operator()(size_t i) const;
+
+    const T dot(const Vector<T>& vec) const;
+
+    friend ostream& operator<<(ostream& os,const Vector<T>& vec)
+    {
+        size_t Num = vec.num;
+        for(size_t i = 0 ; i < Num;i++)
+        {
+            os << vec(i);
+        }
+
+        os << endl;
+        return os;
+    }
+
+    size_t getNum() const;
+
+
+    void newValue(size_t i,const T& value);
+    void insertValue(size_t i, const T& value);
+
+
+    //norm
+    double norm_1() const;     //1范数
+    double norm_2() const;    //2范数
+    double norm_Inf() const;  //Inf范数
 
 private:
     void Allocate(size_t num);
@@ -42,7 +67,7 @@ private:
 
 private:
     T* data;
-    int num;
+    size_t num;
 
 };
 
@@ -54,6 +79,10 @@ void Vector<T >::Allocate(size_t num)
         delete [] data;
     }
     data = new T[num];
+    for(size_t i = 0 ; i < num;i++)
+    {
+        data[i] = (T)0;
+    }
 }
 
 
@@ -144,7 +173,7 @@ const Vector<T > Vector<T >::operator+(const Vector<T >& vec) const
 
 
 template <typename T   >
-const Vector<T > Vector<T >::operator+(const T n) const
+const Vector<T > Vector<T >::operator+(const T& n) const
 {
     Vector<T> RC(num);
 
@@ -166,7 +195,7 @@ const Vector<T> Vector<T>::operator-(const Vector<T>& vec) const
 }
 
 template <typename T>
-const Vector<T> Vector<T>::operator-(const T n) const
+const Vector<T> Vector<T>::operator-(const T& n) const
 {
     Vector<T> RC(num);
     RC = &this + (-n);
@@ -186,13 +215,30 @@ const Vector<T> Vector<T>::operator-() const
 }
 
 template <typename T>
-const Vector<T> Vector<T>::operator*(const T n)const
+const Vector<T> Vector<T>::operator*(const T& n)const
 {
     Vector<T> RC(num);
 
     for(size_t i = 0 ; i < num;i++)
     {
         RC(i) = data[i] * n;
+    }
+
+    return RC;
+}
+template<typename T>
+const T Vector<T>::dot(const Vector<T>& vec) const
+{
+    T RC = (T)0;
+
+    if(num != vec.num)
+    {
+        throw runtime_error("dimension is not equal");
+    }
+
+    for(size_t i = 0 ; i < num;i++)
+    {
+        RC += data[i]*vec(i);
     }
 
     return RC;
@@ -220,6 +266,71 @@ const T Vector<T>::operator()(size_t i) const
     }
 
    return data[i];
+}
+
+template <typename T>
+double Vector<T>::norm_1() const//1范数
+{
+    double RC = 0.0;
+    for(size_t i = 0 ; i < num;i++)
+    {
+        RC += abs(data[i]);
+    }
+
+    return RC;
+
+}
+
+template <typename T>
+double Vector<T>::norm_2() const//2范数
+{
+    double SUM = 0.0;
+    for(size_t i = 0 ; i < num;i++)
+    {
+        SUM += pow(data[i],2);
+    }
+
+    return sqrt(SUM);
+}
+
+template <typename T>
+double Vector<T>::norm_Inf() const//Inf范数
+{
+    double maxRC = 0.0;
+    for(size_t i = 0 ; i < num ; i++)
+    {
+        maxRC = max(maxRC,data[i]);
+    }
+
+    return maxRC;
+}
+
+template <typename T>
+size_t Vector<T>::getNum() const
+{
+    return num;
+}
+
+template <typename T>
+void Vector<T>::newValue(size_t i,const T& value)
+{
+    if(i >= num)
+    {
+        throw out_of_range("i is more than num");
+    }
+
+    data[i] = value;
+}
+
+template <typename T>
+void Vector<T>::insertValue(size_t i, const T& value)
+{
+    if(i >= num)
+    {
+        throw out_of_range("i is more than num");
+    }
+
+    data[i] += value;
 }
 
 #endif // VECTOR_H
