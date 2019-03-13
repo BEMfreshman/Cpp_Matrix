@@ -6,6 +6,8 @@
 #include <iostream>
 #include <cmath>
 
+#include "Matrix.h"
+
 using namespace std;
 
 template <typename T>
@@ -19,6 +21,8 @@ public:
 
     Vector(size_t num,T* arr);
 
+    const Matrix<T> ToMatrix(const string& Type);
+
     ~Vector();
 
     /*
@@ -31,6 +35,8 @@ public:
     const Vector<T> operator-(const T& n) const;
     const Vector<T> operator-() const;
     const Vector<T> operator*(const T& n)const;
+    const Vector<T> operator/(const T& n)const;
+
 
     T& operator()(size_t i);
     const T operator()(size_t i) const;
@@ -60,6 +66,10 @@ public:
     double norm_1() const;     //1范数
     double norm_2() const;    //2范数
     double norm_Inf() const;  //Inf范数
+
+
+    //变换
+    vector<Matrix<T>> House();    //HouseHolder变换
 
 private:
     void Allocate(size_t num);
@@ -226,6 +236,13 @@ const Vector<T> Vector<T>::operator*(const T& n)const
 
     return RC;
 }
+
+template <typename T>
+const Vector<T> Vector<T>::operator / (const T& n) const
+{
+    return operator*(1/n);
+}
+
 template<typename T>
 const T Vector<T>::dot(const Vector<T>& vec) const
 {
@@ -331,6 +348,82 @@ void Vector<T>::insertValue(size_t i, const T& value)
     }
 
     data[i] += value;
+}
+
+template <typename T>
+vector<Matrix<T>> Vector<T>::House()
+{
+    vector<Matrix<T>> RC;
+
+    double InfNorm = this->norm_Inf();
+    Matrix<T> mat = this->ToMatrix("Col");
+
+    Matrix<T> muMat(num,1);
+    muMat.SetBlock(1,0,muMat.GetNumRow() - 1,muMat.GetNumCol(),mat.ExtractBlock(1,0,num - 1,1));
+
+    Matrix<T> sigmaMat = mat.ExtractBlock(1,0,num - 1,1).TransPose()
+            * mat.ExtractBlock(1,0,num - 1,1);
+
+    auto sigma = static_cast<double>(sigmaMat(0,0));
+
+
+    Matrix<T> betaMat(1,1);
+    if(abs(sigma) <= EPS)
+    {
+        //sigma =0
+
+        betaMat(0,0) = 0;
+
+        RC.push_back(muMat,betaMat);
+        return RC;
+    }
+    else
+    {
+        auto alpha = static_cast<double>((pow(mat(0,0),2) + sigma));
+        if(mat(0,0) < 0 || abs(data[0])<= EPS)
+        {
+            muMat(0,0) = mat(0,0) - alpha;
+        }
+        else
+        {
+            muMat(0,0) = static_cast<T>(-sigma/(mat(0,0) + alpha));
+        }
+
+        betaMat(0,0) = 2  / (sigma + pow(muMat(0,0),2));
+//        muMat = muMat / muMat(0,0);
+        RC.push_back(muMat,betaMat);
+
+        return RC;
+    }
+}
+
+
+template <typename T>
+const Matrix<T> Vector<T>::ToMatrix(const string& StorageType)
+{
+    size_t num = this->getNum();
+    if(StorageType == "Row")
+    {
+        Matrix<T> RC(1,num);
+        for(int i = 0 ; i < num;i++)
+        {
+            RC(0,i) = data[i];
+        }
+        return RC;
+    }
+    else if(StorageType == "Col")
+    {
+        Matrix<T> RC(num,1);
+        for( int i = 0 ; i < num ; i++)
+        {
+            RC(i,0) = data[i];
+        }
+        return RC;
+    }
+    else
+    {
+        throw runtime_error("Wrong StorageType");
+    }
 }
 
 #endif // VECTOR_H

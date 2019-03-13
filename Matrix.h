@@ -9,8 +9,6 @@
 #include <vector>
 #include <algorithm>
 
-#include "Vector.h"
-
 #define EPS 1e-10
 
 using namespace std;
@@ -25,6 +23,7 @@ public:
     Matrix<T>& operator=(const Matrix<T>& mat);  //赋值操作
     Matrix(size_t Row, size_t Col, T** arr);
     Matrix(size_t Row, size_t Col, T* arr, const string& StorageType);
+
     //采用数组初始化
     //第一二个参数为本矩阵的行数和列数
     //第三个参数为矩阵初始化的数组
@@ -40,7 +39,6 @@ public:
     const Matrix<T> operator -(const T& num) const;
 	const Matrix<T> operator -() const;
     const Matrix<T> operator *(const Matrix<T>& mat) const;
-    const Vector<T> operator *(const Vector<T>& vec) const;
     const Matrix<T> operator *(const T& num) const;
     friend const Matrix<T> operator *(const T& num,const Matrix<T>& mat)
     {
@@ -59,7 +57,7 @@ public:
 
     T& operator ()(size_t index_row,size_t index_col);//将函数操作符重载，实现寻址操作符功能
     const T operator()(size_t index_row,size_t index_col) const;//供常对象使用
-
+    const T get(size_t index_row,size_t index_col) const;
 
     friend ostream& operator<< (ostream& os,const Matrix<T>& mat)//重载输出操作符
     {
@@ -294,6 +292,8 @@ Matrix<T>::Matrix(size_t Row,size_t Col,T * arr,const string& Storage)
 }
 
 
+
+
 template<typename T>
 void Matrix<T>::SetZeros()
 {
@@ -449,31 +449,6 @@ const Matrix<T> Matrix<T>::operator *(const T& num) const
     return res_mat;
 }
 
-template <typename T>
-const Vector<T> Matrix<T>::operator *(const Vector<T>& vec) const
-{
-    Vector<T> RC(NumRow);
-
-    if(NumCol != vec.getNum())
-    {
-        throw runtime_error("dimension is not equal");
-    }
-
-    for(size_t i = 0 ; i < NumRow;i++)
-    {
-        Vector<T> RowVec(NumCol);
-        for(size_t j = 0 ; j < NumCol;j++)
-        {
-            RowVec.newValue(j,p1[i][j]);
-        }
-
-        T res = RowVec * vec;
-        RC.newValue(i,res);
-    }
-
-    return RC;
-}
-
 template<typename T>
 Matrix<T>& Matrix<T>::operator +=(const Matrix<T>& mat)
 {
@@ -591,6 +566,12 @@ const T Matrix<T>::operator ()(size_t index_row,size_t index_col) const
         throw out_of_range("Out of dimension");
     }
     return p1[index_row][index_col];
+}
+
+template <typename T>
+const T Matrix<T>::get(size_t index_row,size_t index_col) const
+{
+    return operator()(index_row,index_col);
 }
 
 
