@@ -71,6 +71,7 @@ public:
     //变换
     vector<Matrix<T>> House();    //HouseHolder变换
 
+
 private:
     void Allocate(size_t num);
     void DeAllocate();

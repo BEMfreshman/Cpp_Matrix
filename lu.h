@@ -104,7 +104,7 @@ int LU<T>::ithGaussFact(size_t i)
 	if (abs(pivot) < sqrt(EPS))
 	{
 		//主元为0
-		return 0;
+		return EXIT_FAILURE;
 	}
 
 	matColBelowPivot = A.ExtractBlock(i + 1, i, matColBelowPivot.GetNumRow(), matColBelowPivot.GetNumCol());
@@ -201,7 +201,7 @@ vector<Matrix<T>> LU<T>::LUDeCompose()
         int reFlag = ithGaussFact(i);
         if (reFlag == 0)
         {
-            return 0;
+            return EXIT_FAILURE;
         }
     }
 
@@ -270,7 +270,7 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
         if (abs(Pivot) < sqrt(EPS))
         {
             printf("矩阵奇异");
-            return 0;
+            return EXIT_FAILURE;
         }
 
         PEach = ProducePorQMatrix(PivotRow, i);
@@ -289,7 +289,7 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
         int reFlag = ithGaussFact(i);
         if (reFlag == 0)
         {
-            return 0;
+            return EXIT_FAILURE;
         }
 
         cout << "After i Fact" << endl;
@@ -387,7 +387,7 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
         if (abs(Pivot) < sqrt(EPS))
         {
             printf("矩阵奇异");
-            return 0;
+            return EXIT_FAILURE;
         }
 
         PEach = ProducePorQMatrix(PivotRow, i);
@@ -404,7 +404,7 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
         int reFlag = ithGaussFact(i);
         if (reFlag == 0)
         {
-            return 0;
+            return EXIT_FAILURE;
         }
 
         cout << "After i Fact" << endl;
@@ -466,7 +466,7 @@ int LU<T>::Det(T *Val)
 	{
 		//只有一个元素
 		(*Val) = A(0, 0);
-		return 1;
+		return EXIT_SUCCESS;
 	}
 
     vector<Matrix<T>> LUMatrix = LUDeCompose();
