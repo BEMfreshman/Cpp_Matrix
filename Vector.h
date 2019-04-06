@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cmath>
-
+#include "utility.h"
 #include "Matrix.h"
 
 using namespace std;
@@ -16,8 +16,9 @@ class Vector
 public:
     Vector();
     explicit Vector(size_t num);
+    Vector(const Matrix<T>& mat);
     Vector(const Vector<T >& vec);
-    Vector<T >& operator=(const Vector<T >& vec);
+    Vector<T>& operator=(const Vector<T >& vec);
 
     Vector(size_t num,T* arr);
 
@@ -70,6 +71,7 @@ public:
 
     //变换
     vector<Matrix<T>> House();    //HouseHolder变换
+    Matrix<T> Givens(size_t i,size_t j);   //Givens旋转
 
 
 private:
@@ -90,6 +92,7 @@ void Vector<T >::Allocate(size_t num)
         delete [] data;
     }
     data = new T[num];
+    this->num = num;
     for(size_t i = 0 ; i < num;i++)
     {
         data[i] = (T)0;
@@ -118,6 +121,35 @@ template <typename T   >
 Vector<T >::Vector(size_t dataNum):num(dataNum)
 {
     Allocate(dataNum);
+}
+
+template <typename T>
+Vector<T>::Vector(const Matrix<T>& mat):data(nullptr)
+{
+    if(mat.GetNumCol() !=1 && mat.GetNumRow() != 1)
+    {
+        throw runtime_error("This Matrix is not row vector, col vector");
+    }
+
+    size_t Num = max(mat.GetNumRow(),mat.GetNumCol());
+
+    Allocate(Num);
+    if(mat.GetNumCol() == 1)
+    {
+        for(size_t i = 0;i < Num;i++)
+        {
+            data[i] = mat(i,0);
+        }
+    }
+    else
+    {
+        for(size_t i = 0;i < Num;i++)
+        {
+            data[i] = mat(0,i);
+        }
+    }
+
+
 }
 
 template <typename T   >
@@ -375,12 +407,13 @@ vector<Matrix<T>> Vector<T>::House()
 
         betaMat(0,0) = 0;
 
-        RC.push_back(muMat,betaMat);
+        RC.push_back(muMat);
+        RC.push_back(betaMat);
         return RC;
     }
     else
     {
-        auto alpha = static_cast<double>((pow(mat(0,0),2) + sigma));
+        auto alpha = static_cast<double>(sqrt((pow(mat(0,0),2) + sigma)));
         if(mat(0,0) < 0 || abs(data[0])<= EPS)
         {
             muMat(0,0) = mat(0,0) - alpha;
@@ -390,9 +423,12 @@ vector<Matrix<T>> Vector<T>::House()
             muMat(0,0) = static_cast<T>(-sigma/(mat(0,0) + alpha));
         }
 
-        betaMat(0,0) = 2  / (sigma + pow(muMat(0,0),2));
-//        muMat = muMat / muMat(0,0);
-        RC.push_back(muMat,betaMat);
+        betaMat(0,0) = 2 *pow(muMat(0,0),2) / (sigma + pow(muMat(0,0),2));
+
+        T FirstmuMat = muMat(0,0);
+        muMat /= FirstmuMat;
+        RC.push_back(muMat);
+        RC.push_back(betaMat);
 
         return RC;
     }
@@ -425,6 +461,33 @@ const Matrix<T> Vector<T>::ToMatrix(const string& StorageType)
     {
         throw runtime_error("Wrong StorageType");
     }
+}
+
+template<typename T>
+Matrix<T> Vector<T>::Givens(size_t i,size_t j)
+{
+    if(i >= num || j >= num)
+    {
+        throw  out_of_range("i or j is greater than size of Vector");
+    }
+
+    auto a = static_cast<double>(data[i]);
+    auto b = static_cast<double>(data[j]);
+
+    double c,s;
+
+    givens(a,b,&c,&s);
+
+    Matrix<T> RC(num,num);
+    RC.IdentityMatrix();
+
+
+    RC(i,i) = c;
+    RC(i,j) = s;
+    RC(j,i) = -s;
+    RC(j,j) = c;
+
+
 }
 
 #endif // VECTOR_H

@@ -13,6 +13,10 @@
 
 using namespace std;
 
+
+template <typename T>
+class LU;
+
 template<typename T>
 class Matrix {
 public:
@@ -91,6 +95,7 @@ public:
     void SetZeros();   //所有元素置零
     void IdentityMatrix();  // 单位矩阵
     void Resize(size_t Row, size_t Col); //重新分配
+    T det();
 
 
     //Matrix<T>& TransPose();
@@ -134,6 +139,10 @@ public:
 
     double norm_Inf() const;
 
+    //矩阵判断
+    inline bool isSquare() const {return NumRow == NumCol;};
+
+
     inline size_t GetNumRow();
 
     inline size_t GetNumRow() const;
@@ -144,7 +153,15 @@ public:
 
     inline size_t GetNumData();
 
+
     ~Matrix();
+
+
+    /*
+     * 友元类
+     */
+
+    friend class LU<T>;
 
 
 private:
@@ -486,7 +503,7 @@ Matrix<T> &Matrix<T>::operator/=(const T &num) {
 }
 
 template<typename T>
-T &Matrix<T>::operator()(size_t index_row, size_t index_col) {
+T& Matrix<T>::operator()(size_t index_row, size_t index_col) {
     if (index_row >= NumRow || index_col >= NumCol) {
         throw out_of_range("Out of dimension");
     }
@@ -715,6 +732,45 @@ void Matrix<T>::Resize(size_t Row, size_t Col) {
     Allocate(Row, Col);
 }
 
+template <typename T>
+T Matrix<T>::det()
+{
+    LU<T> ludes(*this);
+
+    //求解行列式
+    size_t RowNum = GetNumRow();
+    size_t ColNum = GetNumCol();
+
+    if (RowNum != ColNum)
+    {
+        cout << "错误，非方阵，不可计算行列式" << endl;
+        exit(1);
+    }
+    else if (RowNum == 1)
+    {
+        //只有一个元素
+        return static_cast<T>(*this(0, 0));
+    }
+
+    vector<Matrix<T>> LUMatrix = ludes.LUDeCompose();
+    Matrix<T> U = LUMatrix[1];
+
+    T Val = U(0,0);
+
+    for (int i = 1; i < RowNum; i++)
+    {
+        Val *= U(i, i);
+    }
+
+    if (ludes.getFirstTransFormTimes() % 2 != 0)
+    {
+        //做了奇数次第一类变换
+        Val = -Val;
+    }
+
+    return Val;
+}
+
 template<typename T>
 const Matrix<T> Matrix<T>::TransPose() const {
     Matrix<T> mat(NumCol, NumRow);
@@ -745,7 +801,8 @@ double Matrix<T>::norm_1() const {
 }
 
 template<typename T>
-double Matrix<T>::norm_2() const {
+double Matrix<T>::norm_2() const
+{
 
 }
 
@@ -765,6 +822,4 @@ double Matrix<T>::norm_Inf() const {
 
     return max_element(SUMRow.begin(), SUMRow.end());
 }
-
-
 #endif   // MATRIX_H_

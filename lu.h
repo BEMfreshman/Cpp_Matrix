@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include "Matrix.h"
-#include "transform.h"
+#include "utility.h"
 //#include "GaussSolver.h"
 
 using namespace std;
@@ -20,15 +20,11 @@ public:
 
 	int Det(T* Val);      //计算A的行列式值
 
-//	int GetL(Matrix<T>& L) const;
-//	int GetU(Matrix<T>& U) const;
-
-//	int GetP(Matrix<T>& P) const;
-//	int GetQ(Matrix<T>& Q) const;
-
     vector<Matrix<T>> LUDeCompose();
     vector<Matrix<T>> PQLUDeCompose();
     vector<Matrix<T>> PLUDeCompose();
+
+    int getFirstTransFormTimes() {return FirstTranFormTimes;};
 
 
 private:
@@ -226,7 +222,8 @@ vector<Matrix<T>> LU<T>::LUDeCompose()
     }
 
     vector<Matrix<T>> RC;
-    RC.push_back(L,U);
+    RC.push_back(L);
+    RC.push_back(U);
 
     return RC;
 }
@@ -348,7 +345,10 @@ vector<Matrix<T>> LU<T>::PQLUDeCompose()
     }
 
     vector<Matrix<T>> RC;
-    RC.push_back(P,Q,L,U);
+    RC.push_back(P);
+    RC.push_back(Q);
+    RC.push_back(L);
+    RC.push_back(U);
     return RC;
 }
 
@@ -445,47 +445,11 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
     }
 
     vector<Matrix<T>> RC;
-    RC.push_back(P,L,U);
+    RC.push_back(P);
+    RC.push_back(L);
+    RC.push_back(U);
 
     return RC;
-}
-
-template <typename T>
-int LU<T>::Det(T *Val)
-{
-	//求解行列式
-	size_t RowNum = A.GetNumRow();
-	size_t ColNum = A.GetNumCol();
-
-	if (RowNum != ColNum)
-	{
-		cout << "错误，非方阵，不可计算行列式" << endl;
-		exit(1);
-	}
-    else if (RowNum == 1)
-	{
-		//只有一个元素
-		(*Val) = A(0, 0);
-		return EXIT_SUCCESS;
-	}
-
-    vector<Matrix<T>> LUMatrix = LUDeCompose();
-    Matrix<T> U = LUMatrix[1];
-
-	(*Val) = U(0,0);
-
-	for (int i = 1; i < RowNum; i++)
-	{
-		(*Val) *= U(i, i);
-	}
-
-	if (FirstTranFormTimes % 2 != 0)
-	{
-		//做了奇数次第一类变换
-		(*Val) = -(*Val);
-	}
-
-    return EXIT_SUCCESS;
 }
 
 #endif
