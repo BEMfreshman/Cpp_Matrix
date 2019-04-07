@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cmath>
-#include "utility.h"
+#include "Utility.h"
 #include "Matrix.h"
 
 using namespace std;

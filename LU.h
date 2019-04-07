@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include "Matrix.h"
-#include "utility.h"
+#include "Utility.h"
 //#include "GaussSolver.h"
 
 using namespace std;
@@ -14,11 +14,9 @@ class LU
 {
 public:
 	LU();
-	LU(const Matrix<T>& A);
+    explicit LU(const Matrix<T>& A);
 
 	~LU();
-
-	int Det(T* Val);      //计算A的行列式值
 
     vector<Matrix<T>> LUDeCompose();
     vector<Matrix<T>> PQLUDeCompose();

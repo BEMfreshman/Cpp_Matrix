@@ -141,6 +141,9 @@ public:
 
     //矩阵判断
     inline bool isSquare() const {return NumRow == NumCol;};
+    inline bool isUpTri() const;
+    inline bool isLowTri() const;
+    inline bool isDiag() const;
 
 
     inline size_t GetNumRow();
@@ -822,4 +825,61 @@ double Matrix<T>::norm_Inf() const {
 
     return max_element(SUMRow.begin(), SUMRow.end());
 }
+
+template <typename T>
+inline bool Matrix<T>::isUpTri() const
+{
+    bool isUpTri = true;
+    for(size_t i = 0;i < NumRow;i++)
+    {
+        for(size_t j = 0;j < NumCol;j++)
+        {
+            if(i < j)
+            {
+                isUpTri = (abs(p1[i][j]) < EPS);
+
+                if(!isUpTri)
+                {
+                    return isUpTri;
+                }
+            }
+        }
+    }
+
+    return isUpTri;
+}
+
+
+
+template <typename T>
+inline bool Matrix<T>::isLowTri() const
+{
+    bool isLowTri = true;
+    for(size_t i = 0;i < NumRow;i++)
+    {
+        for(size_t j = 0;j < NumCol;j++)
+        {
+            if(i > j)
+            {
+                isLowTri = (abs(p1[i][j]) < EPS);
+
+                if(!isLowTri)
+                {
+                    return isLowTri;
+                }
+            }
+        }
+    }
+
+    return isLowTri;
+}
+
+template <typename T>
+inline bool Matrix<T>::isDiag() const
+{
+    return isLowTri() && isUpTri();
+}
+
+
+
 #endif   // MATRIX_H_

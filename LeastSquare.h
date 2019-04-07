@@ -8,7 +8,9 @@
 #include "Matrix.h"
 #include "Vector.h"
 #include "Cholesky.h"
+#include "QR.h"
 
+//理论 《数值线性代数》 第二版 p92
 
 template <typename T>
 class LeastSquare
@@ -16,6 +18,7 @@ class LeastSquare
 public:
     LeastSquare(const Matrix<T>& A,const Vector<T>& b);
     const Vector<T> Solve_Regularized();
+    const Vector<T> Solve_QR();
 
 
 private:
@@ -49,6 +52,25 @@ const Vector<T> LeastSquare<T>::Solve_Regularized()
     Cholesky<T> chol(LeftMat);
     Matrix<T> L = chol.LDeCompose();
 
+}
+
+template <typename T>
+const Vector<T> LeastSquare<T>::Solve_QR()
+{
+    //QR法求解最小二乘问题
+
+    QR<T> qr(A);
+    vector<Matrix<T>> QRMatrix = qr.QRHouseHolder();
+
+    Matrix<T> Q = QRMatrix[0];
+    Matrix<T> R = QRMatrix[1];
+
+    Matrix<T> c = Q.TransPose() * b;
+    Matrix<T> c1 = c.ExtractBlock(0,0,R.GetNumRow(),1);
+
+    Matrix<T> b = UptriSolve(R,c1);
+
+    return b;
 }
 
 

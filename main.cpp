@@ -2,10 +2,10 @@
 #include <thread>
 //#include "vld.h"
 #include "Matrix.h"
-#include "lu.h"
+#include "LU.h"
 #include "Cholesky.h"
 #include "QR.h"
-#include "utility.h"
+#include "Utility.h"
 #include "GaussSolver.h"
 
 

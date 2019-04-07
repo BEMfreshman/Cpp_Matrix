@@ -7,7 +7,7 @@
 
 #include "Matrix.h"
 #include "Vector.h"
-#include "utility.h"
+#include "Utility.h"
 #include <vector>
 
 using namespace std;
