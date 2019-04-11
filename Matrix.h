@@ -144,6 +144,9 @@ public:
     inline bool isUpTri() const;
     inline bool isLowTri() const;
     inline bool isDiag() const;
+    inline bool isSymmetric() const;
+    bool operator==(const Matrix<T>& mat) const ;
+
 
 
     inline size_t GetNumRow();
@@ -878,6 +881,34 @@ template <typename T>
 inline bool Matrix<T>::isDiag() const
 {
     return isLowTri() && isUpTri();
+}
+
+template <typename T>
+inline bool Matrix<T>::isSymmetric() const
+{
+    return (*this) == (*this).TransPose();
+}
+
+template <typename T>
+bool Matrix<T>::operator==(const Matrix<T>& mat) const
+{
+    if(NumRow != mat.NumRow || NumCol != mat.NumCol)
+    {
+        return false;
+    }
+
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        for(size_t j = 0 ; j < NumCol;j++)
+        {
+            if(abs(p1[i][j] - mat(i,j)) > EPS)
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 
