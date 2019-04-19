@@ -114,8 +114,8 @@ vector<Matrix<T>> Cholesky<T>::LDDeCompose()
 {
     //算法参见 《数值线性代数》 第二版  P31
 
-    int row = A.GetNumRow();
-    int col = A.GetNumCol();
+    size_t row = A.GetNumRow();
+    size_t col = A.GetNumCol();
 
     Matrix<T> v;
     Matrix<T> matRowLeftPivot;

@@ -52,6 +52,8 @@ const Vector<T> LeastSquare<T>::Solve_Regularized()
     Cholesky<T> chol(LeftMat);
     Matrix<T> L = chol.LDeCompose();
 
+    //ToDo: 完成最小二乘法中正则化方法
+
 }
 
 template <typename T>

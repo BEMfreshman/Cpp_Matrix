@@ -69,6 +69,15 @@ public:
     double norm_Inf() const;  //Inf范数
 
 
+    //Max和Min
+
+    size_t GetMaxId() const;
+    size_t GetMinId() const;
+
+    T GetMaxValue() const;
+    T GetMinValue() const;
+
+
     //变换
     vector<Matrix<T>> House();    //HouseHolder变换
     Matrix<T> Givens(size_t i,size_t j);   //Givens旋转
@@ -488,6 +497,63 @@ Matrix<T> Vector<T>::Givens(size_t i,size_t j)
     RC(j,j) = c;
 
 
+}
+
+
+template <typename T>
+size_t Vector<T>::GetMaxId() const
+{
+    if(num == 1)
+    {
+        return 0;
+    }
+
+    T MaxValue = data[0];
+    size_t RC = 0;
+
+    for(size_t i = 1 ; i < num;i++)
+    {
+        if(MaxValue[i] < data[i])
+        {
+            RC = i;
+        }
+    }
+
+    return RC;
+}
+
+template <typename T>
+size_t Vector<T>::GetMinId() const
+{
+    if(num == 1)
+    {
+        return 0;
+    }
+
+    T MinValue = data[0];
+    size_t RC = 0;
+
+    for(size_t i = 1 ; i < num;i++)
+    {
+        if(MinValue[i] > data[i])
+        {
+            RC = i;
+        }
+    }
+
+    return RC;
+}
+
+template <typename T>
+T Vector<T>::GetMaxValue() const
+{
+    return data[GetMaxId()];
+}
+
+template <typename T>
+T Vector<T>::GetMinValue() const
+{
+    return data[GetMinId()];
 }
 
 #endif // VECTOR_H

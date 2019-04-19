@@ -14,6 +14,9 @@
 using namespace std;
 
 
+//ToDo:求逆矩阵
+//ToDo:条件数
+
 template <typename T>
 class LU;
 
@@ -96,7 +99,7 @@ public:
     void IdentityMatrix();  // 单位矩阵
     void Resize(size_t Row, size_t Col); //重新分配
     T det();
-
+    double cond() const;
 
     //Matrix<T>& TransPose();
     const Matrix<T> TransPose() const;
@@ -158,6 +161,12 @@ public:
     inline size_t GetNumCol() const;
 
     inline size_t GetNumData();
+
+    //取子矩阵
+    const Matrix<T> GetLowTriMatrix(bool needDiag) const;
+    const Matrix<T> GetUpTriMatrix(bool needDiag) const;
+
+    const Matrix<T> GetDiagMatrix() const;
 
 
     ~Matrix();
@@ -909,6 +918,126 @@ bool Matrix<T>::operator==(const Matrix<T>& mat) const
     }
 
     return true;
+}
+
+template <typename T>
+const Matrix<T> Matrix<T>::GetLowTriMatrix(bool needDiag) const
+{
+    if (!isSquare()) {
+        throw runtime_error("This Matrix is not square matrix");
+    }
+
+    Matrix<T> RC(NumRow, NumCol);
+    RC.SetZeros();
+
+    if (needDiag)
+    {
+        for (size_t i = 0; i < NumRow; i++)
+        {
+            for (size_t j = 0; j < NumCol; j++)
+            {
+
+                if (i <= j)
+                {
+                    RC(i, j) = p1[i][j];
+                }
+            }
+
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < NumRow; i++)
+        {
+            for (size_t j = 0; j < NumCol; j++)
+            {
+
+                if (i < j)
+                {
+                    RC(i, j) = p1[i][j];
+                }
+            }
+
+        }
+    }
+
+    return RC;
+}
+
+template <typename T>
+const Matrix<T> Matrix<T>::GetUpTriMatrix(bool needDiag) const
+{
+    if (!isSquare()) {
+        throw runtime_error("This Matrix is not square matrix");
+    }
+
+    Matrix<T> RC(NumRow, NumCol);
+    RC.SetZeros();
+
+    if (needDiag)
+    {
+        for (size_t i = 0; i < NumRow; i++)
+        {
+            for (size_t j = 0; j < NumCol; j++)
+            {
+
+                if (i >= j)
+                {
+                    RC(i, j) = p1[i][j];
+                }
+            }
+
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < NumRow; i++)
+        {
+            for (size_t j = 0; j < NumCol; j++)
+            {
+
+                if (i > j)
+                {
+                    RC(i, j) = p1[i][j];
+                }
+            }
+
+        }
+    }
+
+    return RC;
+}
+
+template <typename T>
+const Matrix<T> Matrix<T>::GetDiagMatrix() const
+{
+    if(!isSquare())
+    {
+        throw runtime_error("This Matrix is not square");
+    }
+
+    Matrix<T> RC(NumRow, NumCol);
+    RC.SetZeros();
+
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        RC(i,i) = p1[i][i];
+    }
+
+    return RC;
+}
+
+template <typename T>
+double Matrix<T>::cond() const
+{
+    //条件数的计算公式：RES = norm(inv(A)) * norm(A);
+    //这个算法重点在于如何计算norm(inv(A))
+    //算法方案参见 《数值线性代数》 第二版 P71
+    //算法理论参见 《数值线性代数》 第二版 P69
+    // 原始文献：FORTRAN codes for estimating the one-norm of a real or complex matrix, with applications to condition estimation
+    //该算法在LAPACK中有运用，参见https://www.netlib.org/lapack/lug/node38.html中xyycon条目的描述
+
+
 }
 
 
