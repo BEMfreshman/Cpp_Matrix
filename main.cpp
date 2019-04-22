@@ -18,48 +18,19 @@ using namespace std;
 
 int main()
 {
-    size_t Row = 3;
-    size_t Col = 3;
+    Matrix<double> A(3,3);
+    A(0,0) = 1.0;
+    A(0,1) = 2.0;
+    A(0,2) = 3.0;
+    A(1,0) = 4.0;
+    A(1,1) = 5.0;
+    A(1,2) = 6.0;
+    A(2,0) = 7.0;
+    A(2,1) = 8.0;
+    A(2,2) = 0.0;
 
-    double **arr = new double* [Row];
-    for (size_t i = 0; i < Row; i++)
-    {
-        arr[i] = new double[Col];
-    }
-    double tmp[3][3] = { 0,3,1,0,4,-2,2,1,1};
-    for (size_t i = 0; i < Row; i++)
-    {
-        for (size_t j = 0; j < Col; j++)
-        {
-            arr[i][j] = tmp[i][j];
-        }
-    }
-
-    Matrix<double> A(Row, Col, arr);
-
-    cout << "A" << endl;
-    cout << A << endl;
-
-
-    for (size_t i = 0; i < Row; i++)
-    {
-        delete[] arr[i];
-    }
-    delete[] arr;
-
-
-    QR<double> qr(A);
-    vector<Matrix<double>> vecMat= qr.QRHouseHolder();
-
-    cout << "Q" << endl;
-    cout << vecMat[0] << endl;
-
-    cout << "R" << endl;
-    cout << vecMat[1] << endl;
-
-
-    cout << " Product" << endl;
-    cout << vecMat[0]* vecMat[1] << endl;
+    cout << "Condition Number" << endl;
+    cout << A.Getcond() << endl;
 
     return 0;
 }

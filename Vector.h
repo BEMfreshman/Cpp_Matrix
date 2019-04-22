@@ -5,10 +5,14 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cmath>
-#include "Utility.h"
 #include "Matrix.h"
 
 using namespace std;
+
+template <typename T>
+class Utility;
+
+
 
 template <typename T>
 class Vector
@@ -56,6 +60,8 @@ public:
         return os;
     }
 
+
+    const Vector<T> sign() const;
     size_t getNum() const;
 
 
@@ -82,6 +88,10 @@ public:
     vector<Matrix<T>> House();    //HouseHolder变换
     Matrix<T> Givens(size_t i,size_t j);   //Givens旋转
 
+
+
+
+    friend class Utility<T>;
 
 private:
     void Allocate(size_t num);
@@ -365,6 +375,18 @@ double Vector<T>::norm_Inf() const//Inf范数
 }
 
 template <typename T>
+const Vector<T> Vector<T>::sign() const
+{
+    Vector<T> RC(num);
+    for(size_t i = 0;i < num;i++)
+    {
+        RC(i) = sgn(data[i]);
+    }
+
+    return RC;
+}
+
+template <typename T>
 size_t Vector<T>::getNum() const
 {
     return num;
@@ -485,7 +507,7 @@ Matrix<T> Vector<T>::Givens(size_t i,size_t j)
 
     double c,s;
 
-    givens(a,b,&c,&s);
+    Utility<T>::givens(a,b,&c,&s);
 
     Matrix<T> RC(num,num);
     RC.IdentityMatrix();

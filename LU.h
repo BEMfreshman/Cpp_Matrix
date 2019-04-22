@@ -195,7 +195,7 @@ vector<Matrix<T>> LU<T>::LUDeCompose()
         int reFlag = ithGaussFact(i);
         if (reFlag == 0)
         {
-            return EXIT_FAILURE;
+            throw runtime_error("There are zero items in diag, LU failed");
         }
     }
 

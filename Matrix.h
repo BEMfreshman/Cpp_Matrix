@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 
+
 #define EPS 1e-10
 
 using namespace std;
@@ -19,6 +20,12 @@ using namespace std;
 
 template <typename T>
 class LU;
+
+template <typename T>
+class GaussSolver;
+
+template <typename T>
+class Utility;
 
 template<typename T>
 class Matrix {
@@ -96,10 +103,10 @@ public:
      *基本的矩阵操作*
      **************/
     void SetZeros();   //所有元素置零
+    void SetConstants(const T& value);     //置为常数
     void IdentityMatrix();  // 单位矩阵
     void Resize(size_t Row, size_t Col); //重新分配
     T det();
-    double cond() const;
 
     //Matrix<T>& TransPose();
     const Matrix<T> TransPose() const;
@@ -142,6 +149,8 @@ public:
 
     double norm_Inf() const;
 
+    double Getcond() const;       //计算条件数
+
     //矩阵判断
     inline bool isSquare() const {return NumRow == NumCol;};
     inline bool isUpTri() const;
@@ -167,6 +176,20 @@ public:
     const Matrix<T> GetUpTriMatrix(bool needDiag) const;
 
     const Matrix<T> GetDiagMatrix() const;
+    const Matrix<T> sign() const;
+
+
+    //取最大值，最小值
+    size_t GetMaxIdRow(size_t RowId);
+    size_t GetMinIdRow(size_t RowId);
+
+    size_t GetMaxIdCol(size_t ColId);
+    size_t GetMinIdCol(size_t ColId);
+
+    void GetMaxId(size_t* RowNo,size_t* ColNo);
+    void GetMinId(size_t* RowNo,size_t* ColNo);
+
+
 
 
     ~Matrix();
@@ -177,6 +200,8 @@ public:
      */
 
     friend class LU<T>;
+    friend class GaussSolver<T>;
+    friend class Utility<T>;
 
 
 private:
@@ -322,6 +347,16 @@ void Matrix<T>::SetZeros() {
     for (size_t i = 0; i < NumRow; ++i) {
         for (size_t j = 0; j < NumCol; ++j) {
             p1[i][j] = T(0);
+        }
+    }
+}
+
+template <typename T>
+void Matrix<T>::SetConstants(const T& value)
+{
+    for (size_t i = 0; i < NumRow; ++i) {
+        for (size_t j = 0; j < NumCol; ++j) {
+            p1[i][j] = value;
         }
     }
 }
@@ -812,7 +847,7 @@ double Matrix<T>::norm_1() const {
         SUMCol.push_back(SUM);
     }
 
-    return max_element(SUMCol.begin(), SUMCol.end());
+    return *(max_element(SUMCol.begin(), SUMCol.end()));
 }
 
 template<typename T>
@@ -822,20 +857,23 @@ double Matrix<T>::norm_2() const
 }
 
 template<typename T>
-double Matrix<T>::norm_Inf() const {
+double Matrix<T>::norm_Inf() const
+{
     vector<T> SUMRow;
 
-    for (size_t i = 0; i < NumRow; i++) {
+    for (size_t i = 0; i < NumRow; i++)
+    {
         double SUM = 0.0;
 
-        for (size_t j = 0; j < NumCol; j++) {
+        for (size_t j = 0; j < NumCol; j++)
+        {
             SUM += p1[i][j];
         }
 
         SUMRow.push_back(SUM);
     }
 
-    return max_element(SUMRow.begin(), SUMRow.end());
+    return *(max_element(SUMRow.begin(), SUMRow.end()));
 }
 
 template <typename T>
@@ -846,7 +884,7 @@ inline bool Matrix<T>::isUpTri() const
     {
         for(size_t j = 0;j < NumCol;j++)
         {
-            if(i < j)
+            if(i > j)
             {
                 isUpTri = (abs(p1[i][j]) < EPS);
 
@@ -871,7 +909,7 @@ inline bool Matrix<T>::isLowTri() const
     {
         for(size_t j = 0;j < NumCol;j++)
         {
-            if(i > j)
+            if(i < j)
             {
                 isLowTri = (abs(p1[i][j]) < EPS);
 
@@ -918,6 +956,141 @@ bool Matrix<T>::operator==(const Matrix<T>& mat) const
     }
 
     return true;
+}
+
+
+template <typename T>
+size_t Matrix<T>::GetMaxIdRow(size_t RowId)
+{
+    if(RowId > NumRow)
+    {
+        throw out_of_range("RowId is greater than RowNum");
+    }
+
+    T Value = p1[RowId][0];
+    size_t index = 0;
+    for(size_t i = 1 ; i < NumCol;i++)
+    {
+        if(Value  < p1[RowId][i])
+        {
+            index = i;
+        }
+    }
+
+    return index;
+}
+
+template <typename T>
+size_t Matrix<T>::GetMinIdRow(size_t RowId)
+{
+    if(RowId > NumRow)
+    {
+        throw out_of_range("RowId is greater than RowNum");
+    }
+
+    T Value = p1[RowId][0];
+    size_t index = 0;
+    for(size_t i = 1 ; i < NumCol;i++)
+    {
+        if(Value > p1[RowId][i])
+        {
+            index = i;
+        }
+    }
+
+    return index;
+}
+
+template <typename T>
+size_t Matrix<T>::GetMaxIdCol(size_t ColId)
+{
+    if(ColId > NumCol)
+    {
+        throw out_of_range("ColId is greater than ColNum");
+    }
+
+    T Value = p1[0][ColId];
+    size_t index = 0;
+    for(size_t i = 1 ; i < NumRow;i++)
+    {
+        if(Value  < p1[i][ColId])
+        {
+            index = i;
+        }
+    }
+
+    return index;
+}
+
+template <typename T>
+size_t Matrix<T>::GetMinIdCol(size_t ColId)
+{
+    if(ColId > NumCol)
+    {
+        throw out_of_range("ColId is greater than ColNum");
+    }
+
+    T Value = p1[0][ColId];
+    size_t index = 0;
+    for(size_t i = 1 ; i < NumRow;i++)
+    {
+        if(Value  > p1[0][i])
+        {
+            index = i;
+        }
+    }
+
+    return index;
+}
+
+template <typename T>
+void Matrix<T>::GetMaxId(size_t* RowNo,size_t* ColNo)
+{
+    T Value = p1[0][0];
+    *RowNo = 0;
+    *ColNo = 0;
+
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        for(size_t j = 0 ;j < NumCol;j++)
+        {
+            if(i == 0 && j == 0)
+            {
+                continue;
+            }
+            if(Value < p1[i][j])
+            {
+                Value = p1[i][j];
+                *RowNo = i;
+                *ColNo = j;
+            }
+        }
+    }
+}
+
+template <typename T>
+void Matrix<T>::GetMinId(size_t* RowNo,size_t* ColNo)
+{
+    T Value = p1[0][0];
+    *RowNo = 0;
+    *ColNo = 0;
+
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        for(size_t j = 0 ;j < NumCol;j++)
+        {
+            if(i == 0 && j == 0)
+            {
+                continue;
+            }
+            if(Value > p1[i][j])
+            {
+                Value = p1[i][j];
+                *RowNo = i;
+                *ColNo = j;
+            }
+        }
+    }
 }
 
 template <typename T>
@@ -1028,7 +1201,23 @@ const Matrix<T> Matrix<T>::GetDiagMatrix() const
 }
 
 template <typename T>
-double Matrix<T>::cond() const
+const Matrix<T> Matrix<T>::sign() const
+{
+    Matrix<T> RC(NumRow,NumCol);
+
+    for(size_t i = 0 ; i < NumRow;i++)
+    {
+        for(size_t j = 0 ; j < NumCol;j++)
+        {
+            RC(i,j) = static_cast<T>(Utility<T>::sgn(p1[i][j]));
+        }
+    }
+
+    return RC;
+}
+
+template <typename T>
+double Matrix<T>::Getcond() const
 {
     //条件数的计算公式：RES = norm(inv(A)) * norm(A);
     //这个算法重点在于如何计算norm(inv(A))
@@ -1037,6 +1226,62 @@ double Matrix<T>::cond() const
     // 原始文献：FORTRAN codes for estimating the one-norm of a real or complex matrix, with applications to condition estimation
     //该算法在LAPACK中有运用，参见https://www.netlib.org/lapack/lug/node38.html中xyycon条目的描述
 
+    int kflag = 1;
+
+    Matrix<T> x(NumRow,1);
+    x.SetConstants(static_cast<T>(1/NumRow));
+
+
+    double inv = 0.0;
+    while(kflag == 1)
+    {
+        //首先求解w
+        GaussSolver<T> GS(*this,x);
+        Matrix<T> w(NumRow,1);
+        Matrix<T> z(NumRow,1);
+
+        try
+        {
+            w = GS.Solve();
+        }
+        catch (runtime_error& e)
+        {
+            throw runtime_error("GS solver for w failed");
+        }
+
+        const Matrix<T> v = w.sign();
+        const Matrix<T> thisTrans = this->TransPose();
+        GaussSolver<T> GS_Another(thisTrans,v);
+
+        try
+        {
+            z = GS_Another.Solve();
+        }
+        catch (runtime_error& e)
+        {
+            throw runtime_error("GS solver for z failed");
+        }
+
+
+        Matrix<T> ztxMatrix = z.TransPose() * x;
+        T ztx = ztxMatrix(0,0);
+        if(z.norm_Inf() <= ztx)
+        {
+            inv = w.norm_1();
+            break;
+        }
+        else
+        {
+            x.SetZeros();
+            size_t maxId = z.GetMaxIdCol(0);
+            x(maxId,0) = 1;
+
+            kflag = 1;
+        }
+
+    }
+
+    return static_cast<double>(this->norm_1() * inv);
 
 }
 
