@@ -368,7 +368,7 @@ double Vector<T>::norm_Inf() const//Inf范数
     double maxRC = 0.0;
     for(size_t i = 0 ; i < num ; i++)
     {
-        maxRC = max(maxRC,data[i]);
+        maxRC = max(maxRC,abs(data[i]));
     }
 
     return maxRC;

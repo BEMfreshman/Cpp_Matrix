@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "NotImplementedExcetion.h"
+
 
 #define EPS 1e-10
 
@@ -841,7 +843,7 @@ double Matrix<T>::norm_1() const {
         double SUM = 0.0;
 
         for (size_t j = 0; j < NumRow; j++) {
-            SUM += p1[j][i];
+            SUM += abs(p1[j][i]);
         }
 
         SUMCol.push_back(SUM);
@@ -853,7 +855,7 @@ double Matrix<T>::norm_1() const {
 template<typename T>
 double Matrix<T>::norm_2() const
 {
-
+    throw NotImplementedExcetion("2-norm of matrix has not been implemented yet");
 }
 
 template<typename T>
@@ -867,7 +869,7 @@ double Matrix<T>::norm_Inf() const
 
         for (size_t j = 0; j < NumCol; j++)
         {
-            SUM += p1[i][j];
+            SUM += abs(p1[i][j]);
         }
 
         SUMRow.push_back(SUM);
@@ -1221,67 +1223,182 @@ double Matrix<T>::Getcond() const
 {
     //条件数的计算公式：RES = norm(inv(A)) * norm(A);
     //这个算法重点在于如何计算norm(inv(A))
-    //算法方案参见 《数值线性代数》 第二版 P71
+    //算法实践方案采用了原始文献（见下一个条目）中的practice algorithm中的算法描述，该方案也是LAPACK的实践方案
     //算法理论参见 《数值线性代数》 第二版 P69
     // 原始文献：FORTRAN codes for estimating the one-norm of a real or complex matrix, with applications to condition estimation
     //该算法在LAPACK中有运用，参见https://www.netlib.org/lapack/lug/node38.html中xyycon条目的描述
 
+
+
     int kflag = 1;
 
-    Matrix<T> x(NumRow,1);
-    x.SetConstants(static_cast<T>(1/NumRow));
+    Matrix<T> b(NumRow,1);
+    Matrix<T> nu(NumRow,1);
 
 
-    double inv = 0.0;
-    while(kflag == 1)
+    b.SetConstants(static_cast<T>(1.0/NumRow));
+    GaussSolver<T> GS(*this,b);
+
+    try
     {
-        //首先求解w
-        GaussSolver<T> GS(*this,x);
-        Matrix<T> w(NumRow,1);
-        Matrix<T> z(NumRow,1);
-
-        try
-        {
-            w = GS.Solve();
-        }
-        catch (runtime_error& e)
-        {
-            throw runtime_error("GS solver for w failed");
-        }
-
-        const Matrix<T> v = w.sign();
-        const Matrix<T> thisTrans = this->TransPose();
-        GaussSolver<T> GS_Another(thisTrans,v);
-
-        try
-        {
-            z = GS_Another.Solve();
-        }
-        catch (runtime_error& e)
-        {
-            throw runtime_error("GS solver for z failed");
-        }
-
-
-        Matrix<T> ztxMatrix = z.TransPose() * x;
-        T ztx = ztxMatrix(0,0);
-        if(z.norm_Inf() <= ztx)
-        {
-            inv = w.norm_1();
-            break;
-        }
-        else
-        {
-            x.SetZeros();
-            size_t maxId = z.GetMaxIdCol(0);
-            x(maxId,0) = 1;
-
-            kflag = 1;
-        }
-
+        nu = GS.Solve();
+        cout << "nu" << endl;
+        cout << nu << endl;
+    }
+    catch (runtime_error& e)
+    {
+        throw runtime_error("GS solver for w failed");
     }
 
-    return static_cast<double>(this->norm_1() * inv);
+
+    if(NumRow == 1)
+    {
+        //快速返回
+        return abs(static_cast<double>(nu(0,0)));
+    }
+
+    double invnorm = nu.norm_1();
+    Matrix<T> xi = nu.sign();
+
+
+    GaussSolver<T> GS_Another(this->TransPose(),xi);
+
+    Matrix<T> x(NumRow,1);
+    try
+    {
+        x = GS_Another.Solve();
+        cout << "x" << endl;
+        cout << x << endl;
+    }
+    catch (runtime_error& e)
+    {
+        throw runtime_error("GS solver for z failed");
+    }
+
+
+
+    int k  = 2;
+    while (k <= 5)
+    {
+        size_t j = x.GetMaxIdCol(0);
+        b.SetZeros();
+        b(j,0) = 1.0;
+        GaussSolver<T> InternalGS1(*this,b);
+        try
+        {
+            nu = InternalGS1.Solve();
+            cout << "nu" << endl;
+            cout << nu << endl;
+
+        }
+        catch (runtime_error& e)
+        {
+            throw runtime_error("Condition Estimate Internal GS solver 1 failed");
+        }
+
+        double invnormOld = invnorm;
+        invnorm = nu.norm_1();
+
+        if(invnorm <= invnormOld || xi == nu.sign())
+        {
+            //表示该迭代步的计算结果未大于上一次的计算结果，或者已经开始死循环
+            //准备退出
+
+            b.SetZeros();
+            for(size_t i = 0; i < b.GetNumRow();i++)
+            {
+                size_t indexBaseOne = i + 1;
+                b(i, 0) = pow(-1, indexBaseOne + 1) * (1 + (indexBaseOne - 1.0) / (b.GetNumRow() - 1));
+            }
+
+            GaussSolver<T> FinalGS(*this,b);
+            try
+            {
+                x = FinalGS.Solve();
+                cout << "x" << endl;
+                cout << x << endl;
+            }
+            catch(runtime_error& e)
+            {
+                throw runtime_error("Condition Estimate Final GS solver failed");
+            }
+
+            if( 2.0 * x.norm_1() / ( 3 * x.GetNumRow()) > invnorm)
+            {
+                nu = x;
+                invnorm = 2.0 * x.norm_1() / ( 3 * x.GetNumRow());
+                break;
+            }
+
+        }
+
+        xi = nu.sign();
+        GaussSolver<T> InternalGS2(this->TransPose(),xi);
+        try
+        {
+            x = InternalGS2.Solve();
+        }
+        catch (runtime_error& e)
+        {
+            throw runtime_error("Condition Estimate Internal GS solver 2 failed");
+        }
+        k = k + 1;
+    }
+
+    double norm = this->norm_1();
+    return norm * invnorm;
+
+
+//    double inv = 0.0;
+//    while(kflag == 1)
+//    {
+//        //首先求解w
+//        GaussSolver<T> GS(*this,x);
+//        Matrix<T> w(NumRow,1);
+//        Matrix<T> z(NumRow,1);
+//
+//        try
+//        {
+//            w = GS.Solve();
+//        }
+//        catch (runtime_error& e)
+//        {
+//            throw runtime_error("GS solver for w failed");
+//        }
+//
+//        const Matrix<T> v = w.sign();
+//        const Matrix<T> thisTrans = this->TransPose();
+//        GaussSolver<T> GS_Another(thisTrans,v);
+//
+//        try
+//        {
+//            z = GS_Another.Solve();
+//        }
+//        catch (runtime_error& e)
+//        {
+//            throw runtime_error("GS solver for z failed");
+//        }
+//
+//
+//        Matrix<T> ztxMatrix = z.TransPose() * x;
+//        T ztx = ztxMatrix(0,0);
+//        if(z.norm_Inf() <= ztx)
+//        {
+//            inv = w.norm_1();
+//            break;
+//        }
+//        else
+//        {
+//            x.SetZeros();
+//            size_t maxId = z.GetMaxIdCol(0);
+//            x(maxId,0) = 1;
+//
+//            kflag = 1;
+//        }
+//
+//    }
+//
+//    return static_cast<double>(this->norm_1() * inv);
 
 }
 

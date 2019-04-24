@@ -93,6 +93,20 @@ const Matrix<T> GaussSolver<T>::Solve() const
 
 	Matrix<T> ans(A.GetNumRow(),1);
 
+
+//	cout << "L" << endl;
+//	cout << L << endl;
+//
+//
+//	cout << "U" << endl;
+//	cout << U << endl;
+//
+//	cout << "L * U" << endl;
+//	cout << L * U << endl;
+//
+//	cout << "b" << endl;
+//	cout << b << endl;
+
 	try
 	{
 		ans = Utility<T>::UptriSolve(U,Utility<T>::LowtriSolve(L,b));

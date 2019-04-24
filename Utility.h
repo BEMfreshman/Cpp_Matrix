@@ -275,7 +275,7 @@ public:
         {
             return 1;
         }
-        else if(value < 0)
+        else
         {
             return -1;
         }
