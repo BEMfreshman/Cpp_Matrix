@@ -385,32 +385,32 @@ vector<Matrix<T>> LU<T>::PLUDeCompose()
         if (abs(Pivot) < sqrt(EPS))
         {
             printf("矩阵奇异");
-            return EXIT_FAILURE;
+            throw runtime_error("Matrix Singularity");
         }
 
         PEach = ProducePorQMatrix(PivotRow, i);
 
-        cout << "Before" << endl;
-        cout << A << endl;
+//        cout << "Before" << endl;
+//        cout << A << endl;
         A = PEach * A;
 
-        cout << "After" << endl;
-        cout << A << endl;
+//        cout << "After" << endl;
+//        cout << A << endl;
 
         PVec.push_back(PEach);
 
         int reFlag = ithGaussFact(i);
         if (reFlag == 0)
         {
-            return EXIT_FAILURE;
+            throw runtime_error("Gauss Fact failed");
         }
 
-        cout << "After i Fact" << endl;
-        cout << A << endl;
+//        cout << "After i Fact" << endl;
+//        cout << A << endl;
 
     }
 
-    for (size_t i = PVec.size() - 1; i >= 0; i--)
+    for (int i = PVec.size() - 1; i >= 0; i--)
     {
         if (i == PVec.size() - 1)
         {

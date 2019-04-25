@@ -17,9 +17,6 @@
 using namespace std;
 
 
-//ToDo:求逆矩阵
-//ToDo:条件数
-
 template <typename T>
 class LU;
 
@@ -110,8 +107,9 @@ public:
     void Resize(size_t Row, size_t Col); //重新分配
     T det();
 
-    //Matrix<T>& TransPose();
     const Matrix<T> TransPose() const;
+    const Matrix<T> Inv() const;
+
 
     Matrix<T> &FirstTypeTransForm(size_t Row_One, size_t Row_Two);
 
@@ -137,6 +135,10 @@ public:
     const Matrix<T> ExtractBlock(size_t RowStart, size_t ColStart, size_t RowNumToBlock, size_t ColNumToBlock) const;
 
     void SetBlock(size_t RowStart, size_t ColStart, size_t RowNumToSet, size_t ColNumtoSet, const Matrix<T> &mat);
+    void SetRow(size_t i, const Matrix<T>& RowMat);
+    void SetCol(size_t i, const Matrix<T>& ColMat);
+
+
 
     void FindMax(size_t RowStart, size_t ColStart, size_t RowNumToFind, size_t ColNumToFind, T *Value, size_t *row,
                  size_t *col);
@@ -159,6 +161,7 @@ public:
     inline bool isLowTri() const;
     inline bool isDiag() const;
     inline bool isSymmetric() const;
+    inline bool HasZerosDiag() const;
     bool operator==(const Matrix<T>& mat) const ;
 
 
@@ -222,6 +225,8 @@ private:
 
     void Swap(Matrix<T> &mat);
 
+    const Matrix<T> InvTri() const;
+
 //    void BuildPETSCMat();
 };
 
@@ -276,6 +281,67 @@ void Matrix<T>::Swap(Matrix<T> &mat) {
             mat.p1[i][j] = p1[i][j];
             p1[i][j] = tmp;
         }
+    }
+}
+
+template <typename T>
+bool Matrix<T>::HasZerosDiag() const
+{
+    size_t UB = min(GetNumRow(),GetNumCol());
+
+    for(size_t i = 0 ; i < UB;i++)
+    {
+        if(abs(p1[i][i]) < EPS)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+template <typename T>
+const Matrix<T> Matrix<T>::InvTri() const
+{
+    if(isUpTri())
+    {
+        Matrix<T> RC(GetNumRow(),GetNumCol());
+
+        for(size_t i = 0 ; i < GetNumCol();i++)
+        {
+            Matrix<T> ei(GetNumRow(),1);
+            ei.SetZeros();
+            ei(i,0) = 1.0;
+
+            Matrix<T> AnsCol(GetNumRow(),1);
+            AnsCol.SetZeros();
+            AnsCol = Utility<T>::UptriSolve(*this,ei);
+            RC.SetCol(i,AnsCol);
+        }
+
+        return RC;
+    }
+    else if(isLowTri())
+    {
+        Matrix<T> RC(GetNumRow(),GetNumCol());
+
+        for(size_t i = 0 ; i < GetNumCol();i++)
+        {
+            Matrix<T> ei(GetNumRow(),1);
+            ei.SetZeros();
+            ei(i,0) = 1.0;
+
+            Matrix<T> AnsCol(GetNumRow(),1);
+            AnsCol.SetZeros();
+            AnsCol = Utility<T>::LowtriSolve(*this,ei);
+            RC.SetCol(i,AnsCol);
+        }
+
+        return RC;
+    }
+    else
+    {
+        throw runtime_error("Not Tri Matrix");
     }
 }
 
@@ -451,7 +517,8 @@ template<typename T>
 const Matrix<T> Matrix<T>::operator*(const Matrix<T> &mat) const {
     if (NumCol != mat.NumRow) {
         cout << "第一个矩阵的列数与第二个矩阵的行数不相等，程序退出" << endl;
-        exit(0);
+
+        throw runtime_error("The number of col of first matrix is not equal to the number of row of second matrix");
     }
 
     Matrix<T> res_mat(NumRow, mat.NumCol);
@@ -634,6 +701,56 @@ Matrix<T>::SetBlock(size_t RowStart, size_t ColStart, size_t RowNumToSet, size_t
         for (size_t j = 0; j < ColNumToSet; j++) {
             p1[i + RowStart][j + ColStart] = mat.p1[i][j];
         }
+    }
+}
+
+template <typename T>
+void Matrix<T>::SetRow(size_t index, const Matrix<T>& RowMat)
+{
+    if(RowMat.GetNumRow() != 1)
+    {
+        throw runtime_error("The parameter is not Row Matrix");
+    }
+
+    if(index >= GetNumRow())
+    {
+        throw out_of_range("index is out of range");
+    }
+
+    if(RowMat.GetNumCol() != GetNumCol())
+    {
+        throw runtime_error("The number of col of parameter matrix is not equal to"
+                            "this matrix");
+    }
+
+    for(size_t i = 0 ; i < RowMat.GetNumCol();i++)
+    {
+        p1[index][i] = RowMat(0,i);
+    }
+}
+
+template <typename T>
+void Matrix<T>::SetCol(size_t index, const Matrix<T>& ColMat)
+{
+    if(ColMat.GetNumCol() != 1)
+    {
+        throw runtime_error("The parameter is not Col Matrix");
+    }
+
+    if(index >= GetNumCol())
+    {
+        throw out_of_range("index is out of range");
+    }
+
+    if(ColMat.GetNumRow() != GetNumRow())
+    {
+        throw runtime_error("The number of row of parameter matrix is not equal to"
+                            "this matrix");
+    }
+
+    for(size_t i = 0 ; i < ColMat.GetNumRow();i++)
+    {
+        p1[i][index] = ColMat(i,0);
     }
 }
 
@@ -833,6 +950,67 @@ const Matrix<T> Matrix<T>::TransPose() const {
         }
     }
     return mat;
+}
+
+template <typename T>
+const Matrix<T> Matrix<T>::Inv() const
+{
+    //矩阵求逆
+
+
+    //一般矩阵采用LU分解法求逆
+    if(!isSquare())
+    {
+        throw runtime_error("This Matrix is not Square");
+    }
+
+
+    if(isDiag())
+    {
+        if(HasZerosDiag())
+        {
+            throw runtime_error("There is zero Item on Diag in Diag Matrix");
+        }
+
+        Matrix<T> RC(GetNumRow(),GetNumCol());
+        RC.SetZeros();
+        for(size_t i = 0; i < GetNumRow(); i++)
+        {
+            RC(i,i) = 1.0 / p1[i][i];
+        }
+
+        return RC;
+    }
+    else if(isLowTri())
+    {
+        return InvTri();
+    }
+    else if(isUpTri())
+    {
+        return InvTri();
+    }
+    else
+    {
+        Matrix<T> Imat(GetNumRow(),GetNumCol());
+        Imat.IdentityMatrix();
+
+        LU<T> lu(*this);
+        vector<Matrix<T>> PLUmat = lu.PLUDeCompose();
+
+        Matrix<T> P = PLUmat[0];
+        Matrix<T> L = PLUmat[1];
+        Matrix<T> U = PLUmat[2];
+
+        Matrix<T> invL = L.Inv();
+        Matrix<T> invU = U.Inv();
+
+        Matrix<T> RC(GetNumRow(),GetNumCol());
+
+
+        RC = invU * invL * P * Imat;
+
+        return RC;
+    }
 }
 
 template<typename T>
@@ -1241,7 +1419,7 @@ double Matrix<T>::Getcond() const
 
     try
     {
-        nu = GS.Solve();
+        nu = GS.ColPivotSolve();
         cout << "nu" << endl;
         cout << nu << endl;
     }
@@ -1266,7 +1444,7 @@ double Matrix<T>::Getcond() const
     Matrix<T> x(NumRow,1);
     try
     {
-        x = GS_Another.Solve();
+        x = GS_Another.ColPivotSolve();
         cout << "x" << endl;
         cout << x << endl;
     }
@@ -1314,7 +1492,7 @@ double Matrix<T>::Getcond() const
             GaussSolver<T> FinalGS(*this,b);
             try
             {
-                x = FinalGS.Solve();
+                x = FinalGS.ColPivotSolve();
                 cout << "x" << endl;
                 cout << x << endl;
             }
@@ -1336,7 +1514,7 @@ double Matrix<T>::Getcond() const
         GaussSolver<T> InternalGS2(this->TransPose(),xi);
         try
         {
-            x = InternalGS2.Solve();
+            x = InternalGS2.ColPivotSolve();
         }
         catch (runtime_error& e)
         {
@@ -1347,58 +1525,6 @@ double Matrix<T>::Getcond() const
 
     double norm = this->norm_1();
     return norm * invnorm;
-
-
-//    double inv = 0.0;
-//    while(kflag == 1)
-//    {
-//        //首先求解w
-//        GaussSolver<T> GS(*this,x);
-//        Matrix<T> w(NumRow,1);
-//        Matrix<T> z(NumRow,1);
-//
-//        try
-//        {
-//            w = GS.Solve();
-//        }
-//        catch (runtime_error& e)
-//        {
-//            throw runtime_error("GS solver for w failed");
-//        }
-//
-//        const Matrix<T> v = w.sign();
-//        const Matrix<T> thisTrans = this->TransPose();
-//        GaussSolver<T> GS_Another(thisTrans,v);
-//
-//        try
-//        {
-//            z = GS_Another.Solve();
-//        }
-//        catch (runtime_error& e)
-//        {
-//            throw runtime_error("GS solver for z failed");
-//        }
-//
-//
-//        Matrix<T> ztxMatrix = z.TransPose() * x;
-//        T ztx = ztxMatrix(0,0);
-//        if(z.norm_Inf() <= ztx)
-//        {
-//            inv = w.norm_1();
-//            break;
-//        }
-//        else
-//        {
-//            x.SetZeros();
-//            size_t maxId = z.GetMaxIdCol(0);
-//            x(maxId,0) = 1;
-//
-//            kflag = 1;
-//        }
-//
-//    }
-//
-//    return static_cast<double>(this->norm_1() * inv);
 
 }
 

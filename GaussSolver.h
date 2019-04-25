@@ -68,7 +68,37 @@ const Matrix<T> GaussSolver<T>::FullPivotSolve()  const        //全选主元消
 template<typename T>
 const Matrix<T> GaussSolver<T>::ColPivotSolve()  const         //列主元消去
 {
+	//使用 PA= LU的分解方案
 
+	LU<T> lu(A);
+	Matrix<T> L(A.GetNumRow(),A.GetNumCol());
+	Matrix<T> U(A.GetNumRow(),A.GetNumCol());
+	Matrix<T> P(A.GetNumRow(),A.GetNumCol());
+
+	try
+	{
+		vector<Matrix<T>> PLUMatrix = lu.PLUDeCompose();
+		P = PLUMatrix[0];
+		L = PLUMatrix[1];
+		U = PLUMatrix[2];
+	}
+	catch (runtime_error& e)
+	{
+		throw runtime_error("PLU failed");
+	}
+
+	Matrix<T> ans(A.GetNumRow(),1);
+
+	try
+	{
+		ans = Utility<T>::UptriSolve(U,Utility<T>::LowtriSolve(L,P*b));
+	}
+	catch(runtime_error& e)
+	{
+		throw runtime_error("PLU solve failed");
+	}
+
+	return ans;
 
 
 }
@@ -92,20 +122,6 @@ const Matrix<T> GaussSolver<T>::Solve() const
 	}
 
 	Matrix<T> ans(A.GetNumRow(),1);
-
-
-//	cout << "L" << endl;
-//	cout << L << endl;
-//
-//
-//	cout << "U" << endl;
-//	cout << U << endl;
-//
-//	cout << "L * U" << endl;
-//	cout << L * U << endl;
-//
-//	cout << "b" << endl;
-//	cout << b << endl;
 
 	try
 	{

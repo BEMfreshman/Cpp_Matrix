@@ -36,6 +36,9 @@ int main()
     cout << "Condition Number" << endl;
     cout << A.Getcond() << endl;
 
+    cout << "Inv of A" << endl;
+    cout << A.Inv() << endl;
+
 
 //    Vector<double> A_Vector(3);
 //    A_Vector(0) = 1;
