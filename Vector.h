@@ -20,7 +20,7 @@ class Vector
 public:
     Vector();
     explicit Vector(size_t num);
-    Vector(const Matrix<T>& mat);
+    explicit Vector(const Matrix<T>& mat);
     Vector(const Vector<T >& vec);
     Vector<T>& operator=(const Vector<T >& vec);
 

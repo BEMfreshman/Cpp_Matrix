@@ -52,7 +52,7 @@ void SparseMatrix_COO<T>::insertValue(size_t Row, size_t Col, const T& Value)
         throw out_of_range("Row is greater than MaxRowNum OR Col is greater than MaxColNum");
     }
 
-    vector<size_t>::iterator iter = RowIndex.begin();
+    auto iter = RowIndex.begin();
 
     while((iter = find(iter,RowIndex.end(),Row)) != RowIndex.end())
     {
@@ -79,7 +79,7 @@ void SparseMatrix_COO<T>::newValue(size_t Row,size_t Col,const T& Value)
         throw out_of_range("Row is greater than MaxRowNum OR Col is greater than MaxColNum");
     }
 
-    vector<size_t>::iterator iter = RowIndex.begin();
+    auto iter = RowIndex.begin();
 
     while((iter = find(iter,RowIndex.end(),Row)) != RowIndex.end())
     {

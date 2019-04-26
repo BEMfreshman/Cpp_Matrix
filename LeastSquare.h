@@ -54,6 +54,24 @@ const Vector<T> LeastSquare<T>::Solve_Regularized()
 
     //ToDo: 完成最小二乘法中正则化方法
 
+    Matrix<T> y(A.GetNumCol(),1);
+    Matrix<T> ans(L.GetNumRow(),1);
+
+    if(L.isLowTri())
+    {
+        ans = Utility<T>::UptriSolve(L.TransPose(),Utility<T>::LowtriSolve(L,RightVec));
+        return ans;
+    }
+    else if(L.isUpTri())
+    {
+        ans = Utility<T>::LowtriSolve(L.TransPose(),Utility<T>::UptriSolve(L,RightVec));
+        return ans;
+    }
+    else
+    {
+        throw runtime_error("Chol fact failed");
+    }
+
 }
 
 template <typename T>
@@ -70,9 +88,16 @@ const Vector<T> LeastSquare<T>::Solve_QR()
     Matrix<T> c = Q.TransPose() * b;
     Matrix<T> c1 = c.ExtractBlock(0,0,R.GetNumRow(),1);
 
-    Matrix<T> b = UptriSolve(R,c1);
+    if(R.isUpTri())
+    {
+        Matrix<T> b = UptriSolve(R,c1);
+        return b;
+    }
+    else
+    {
+        throw runtime_error("QR Fact failed");
+    }
 
-    return b;
 }
 
 
